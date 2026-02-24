@@ -222,7 +222,8 @@ chmod 600 /home/openclaw/.openclaw/secrets/feishu_user_refresh_token
 
 #### 1. 启动本地回调服务
 
-```js
+```shell
+cat > /tmp/feishu-oauth-callback.js <<'JS'
 const http = require('http');
 const url = require('url');
 
@@ -243,6 +244,9 @@ http.createServer((req, res) => {
 }).listen(port, '127.0.0.1', () => {
   console.log(`Listening on http://127.0.0.1:${port}/feishu/oauth/callback`);
 });
+JS
+
+node /tmp/feishu-oauth-callback.js
 ```
 
 #### 2. 创建并配置 Cloudflare Tunnel
