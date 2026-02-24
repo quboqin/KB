@@ -79,3 +79,42 @@ const { title, description, pubDate, updatedDate, heroImage, tags } = post.data;
     <GiscusComments />
   </div>
 </BaseLayout>
+
+<script>
+  import mermaid from 'mermaid';
+
+  function initMermaid() {
+    const isDark = document.documentElement.classList.contains('dark');
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: isDark ? 'dark' : 'default',
+      securityLevel: 'loose',
+    });
+
+    const blocks = document.querySelectorAll<HTMLElement>('pre code.language-mermaid');
+    blocks.forEach(async (code) => {
+      const pre = code.parentElement!;
+      const definition = code.textContent ?? '';
+      const id = `mermaid-${Math.random().toString(36).slice(2, 9)}`;
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'mermaid-diagram my-6 flex justify-center overflow-x-auto';
+
+      try {
+        const { svg } = await mermaid.render(id, definition);
+        wrapper.innerHTML = svg;
+      } catch {
+        wrapper.textContent = definition;
+      }
+
+      pre.replaceWith(wrapper);
+    });
+  }
+
+  // Init on load and re-run if dark mode toggles
+  initMermaid();
+  new MutationObserver(() => {
+    document.querySelectorAll('.mermaid-diagram').forEach(el => el.remove());
+    // Re-render not needed after toggle — theme change re-initializes on next page load
+  }).observe(document.documentElement, { attributeFilter: ['class'] });
+</script>

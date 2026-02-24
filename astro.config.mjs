@@ -7,13 +7,12 @@ import tailwind from '@astrojs/tailwind';
 export default defineConfig({
   site: 'https://kb.example.com',
   integrations: [
-    mdx(),
+    mdx({
+      syntaxHighlight: false,
+    }),
     tailwind({ applyBaseStyles: false }),
   ],
   markdown: {
-    shikiConfig: {
-      theme: 'github-dark',
-      wrap: true,
-    },
+    syntaxHighlight: false,
   },
 });

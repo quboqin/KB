@@ -5,7 +5,11 @@
       "Bash(npm run:*)",
       "Bash(npm ls:*)",
       "mcp__github__get_me",
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "mcp__github__create_repository",
+      "Bash(head:*)",
+      "Bash(gh repo:*)",
+      "Bash(git add:*)"
     ]
   }
 }

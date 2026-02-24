@@ -31,4 +31,40 @@
   html {
     scroll-behavior: smooth;
   }
+
+  /* Code blocks — black background, no syntax highlighting */
+  .prose pre {
+    background-color: #0d0d0d !important;
+    color: #e2e8f0 !important;
+    border-radius: 0.5rem;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+  }
+
+  .prose pre code {
+    background: none !important;
+    color: inherit !important;
+    font-size: 0.875rem;
+    padding: 0;
+  }
+
+  /* Inline code */
+  .prose :not(pre) > code {
+    background-color: #f1f5f9 !important;
+    color: #4f46e5 !important;
+    border-radius: 0.25rem;
+    padding: 0.125rem 0.375rem;
+    font-size: 0.875em;
+    font-weight: 400;
+  }
+
+  .dark .prose :not(pre) > code {
+    background-color: #1e293b !important;
+    color: #a5b4fc !important;
+  }
+
+  .prose :not(pre) > code::before,
+  .prose :not(pre) > code::after {
+    content: none;
+  }
 }
