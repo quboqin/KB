@@ -1,0 +1,22 @@
+---
+interface Props {
+  tags: { name: string; count: number }[];
+}
+
+const { tags } = Astro.props;
+const maxCount = Math.max(...tags.map(t => t.count), 1);
+---
+
+<div class="flex flex-wrap gap-2">
+  {tags.map(({ name, count }) => {
+    const opacity = 0.6 + (count / maxCount) * 0.4;
+    return (
+      <a href={`/tags/${name}`}
+         class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+         style={`opacity: ${opacity}`}>
+        <span class="text-sm font-medium">#{name}</span>
+        <span class="text-xs text-slate-400 dark:text-slate-500">{count}</span>
+      </a>
+    );
+  })}
+</div>

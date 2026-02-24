@@ -1,0 +1,19 @@
+---
+import PostCard from './PostCard.astro';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  posts: CollectionEntry<'posts'>[];
+}
+
+const { posts } = Astro.props;
+---
+
+{posts.length > 0 && (
+  <section class="mt-16 pt-12 border-t border-slate-200 dark:border-slate-700">
+    <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-8">相关文章</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {posts.map(post => <PostCard post={post} />)}
+    </div>
+  </section>
+)}

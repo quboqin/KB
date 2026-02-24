@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tail:*)",
+      "Bash(npm run:*)",
+      "Bash(npm ls:*)",
+      "mcp__github__get_me",
+      "Bash(git init:*)"
+    ]
+  }
+}

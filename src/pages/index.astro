@@ -1,0 +1,51 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PostList from '@/components/blog/PostList.astro';
+import TagCloud from '@/components/ui/TagCloud.astro';
+import RSSLink from '@/components/widgets/RSSLink.astro';
+import { getAllPosts, getAllTags } from '@/utils/posts';
+
+const posts = await getAllPosts();
+const tags = await getAllTags();
+---
+
+<BaseLayout title="首页">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Hero -->
+    <section class="text-center mb-16">
+      <h1 class="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white mb-4 leading-tight">
+        🧠 KB with AI
+      </h1>
+      <p class="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+        探索 AI 与知识管理的边界，记录学习与思考
+      </p>
+      <div class="mt-6 flex items-center justify-center gap-4 flex-wrap">
+        <a href="#posts"
+           class="px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors">
+          浏览文章
+        </a>
+        <RSSLink />
+      </div>
+    </section>
+
+    <!-- Tag Cloud -->
+    {tags.length > 0 && (
+      <section class="mb-12">
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">热门标签</h2>
+        <TagCloud tags={tags.slice(0, 20)} />
+      </section>
+    )}
+
+    <!-- Posts Grid -->
+    <section id="posts">
+      <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-8">最新文章</h2>
+      {posts.length > 0 ? (
+        <PostList posts={posts} />
+      ) : (
+        <div class="text-center py-20 text-slate-400 dark:text-slate-500">
+          <p class="text-lg">还没有文章，敬请期待</p>
+        </div>
+      )}
+    </section>
+  </div>
+</BaseLayout>

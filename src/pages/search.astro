@@ -1,0 +1,31 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="搜索" description="搜索 KB with AI 中的所有文章">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-8">搜索</h1>
+
+    <div id="search" class="min-h-[400px]"></div>
+
+    <p class="mt-8 text-sm text-slate-400 dark:text-slate-500 text-center">
+      提示：搜索由 <a href="https://pagefind.app" class="hover:underline">Pagefind</a> 提供，需先运行 <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">npm run build</code>
+    </p>
+  </div>
+</BaseLayout>
+
+<link href="/pagefind/pagefind-ui.css" rel="stylesheet" />
+<script src="/pagefind/pagefind-ui.js" is:inline></script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    // @ts-ignore - pagefind loaded dynamically post-build
+    new PagefindUI({
+      element: '#search',
+      showSubResults: true,
+      translations: {
+        placeholder: '搜索文章...',
+        zero_results: '没有找到 "[SEARCH_TERM]" 的结果',
+      },
+    });
+  });
+</script>

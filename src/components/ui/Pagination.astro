@@ -1,0 +1,31 @@
+---
+interface Props {
+  page: {
+    currentPage: number;
+    lastPage: number;
+    url: { prev?: string; next?: string };
+  };
+}
+
+const { page } = Astro.props;
+---
+
+<nav class="flex items-center justify-center gap-2 mt-12" aria-label="分页导航">
+  {page.url.prev && (
+    <a href={page.url.prev}
+       class="flex items-center gap-1 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+      ← 上一页
+    </a>
+  )}
+
+  <span class="px-4 py-2 text-sm text-slate-500 dark:text-slate-400">
+    {page.currentPage} / {page.lastPage}
+  </span>
+
+  {page.url.next && (
+    <a href={page.url.next}
+       class="flex items-center gap-1 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+      下一页 →
+    </a>
+  )}
+</nav>

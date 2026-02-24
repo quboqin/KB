@@ -1,0 +1,92 @@
+---
+title: "Astro + MDX 完全指南"
+description: "深入了解如何使用 Astro 和 MDX 构建现代博客，包括内容集合、组件复用、代码高亮和部署配置。"
+pubDate: 2024-02-01
+updatedDate: 2024-02-10
+tags: ["Astro", "MDX", "前端", "博客"]
+---
+
+## 为什么选择 Astro？
+
+Astro 是一个专注于内容网站的现代框架，其核心优势：
+
+1. **零 JS 默认** — 默认不向客户端发送 JavaScript
+2. **岛屿架构** — 只有需要交互的组件才会激活
+3. **框架无关** — 可以混用 React、Vue、Svelte 组件
+4. **内容集合** — 类型安全的内容管理
+
+## MDX 的优势
+
+MDX 允许在 Markdown 中嵌入 JSX 组件：
+
+```typescript
+// 在 MDX 中导入并使用组件
+import Callout from '../components/Callout.astro';
+
+<Callout type="info">
+  这是一个提示框组件！
+</Callout>
+```
+
+## 内容集合配置
+
+Astro 的 Content Collections 提供类型安全的内容管理：
+
+```typescript
+// src/content/config.ts
+import { defineCollection, z } from 'astro:content';
+
+const posts = defineCollection({
+  type: 'content',
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    pubDate: z.coerce.date(),
+    tags: z.array(z.string()).default([]),
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { posts };
+```
+
+## 静态路由生成
+
+```astro
+---
+// src/pages/posts/[...slug].astro
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  return posts.map(post => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content, headings } = await post.render();
+---
+
+<Content />
+```
+
+## 部署到 Vercel
+
+```json
+// vercel.json
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "astro"
+}
+```
+
+## 总结
+
+Astro + MDX 是目前构建技术博客的最佳选择之一：
+- 出色的开发体验（热更新、类型安全）
+- 极致的性能表现（零 JS 默认）
+- 灵活的内容管理（Content Collections）
+- 简单的部署配置（Vercel / Cloudflare Pages）

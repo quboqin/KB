@@ -1,0 +1,31 @@
+---
+---
+
+<div id="reading-progress"
+     class="fixed top-0 left-0 z-[60] h-1 bg-indigo-500 transition-[width] duration-100 ease-linear"
+     style="width: 0%"
+     role="progressbar"
+     aria-label="阅读进度"
+     aria-valuenow={0}
+     aria-valuemin={0}
+     aria-valuemax={100}>
+</div>
+
+<script>
+  const bar = document.getElementById('reading-progress') as HTMLElement;
+
+  function updateProgress() {
+    const article = document.getElementById('article-content');
+    if (!article || !bar) return;
+
+    const { top, height } = article.getBoundingClientRect();
+    const scrolled = Math.max(0, -top);
+    const total = height - window.innerHeight;
+    const progress = total > 0 ? Math.min(100, (scrolled / total) * 100) : 0;
+    bar.style.width = `${progress}%`;
+    bar.setAttribute('aria-valuenow', String(Math.round(progress)));
+  }
+
+  window.addEventListener('scroll', updateProgress, { passive: true });
+  updateProgress();
+</script>

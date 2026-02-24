@@ -1,0 +1,52 @@
+---
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  headings: Heading[];
+}
+
+const { headings } = Astro.props;
+const filtered = headings.filter(h => h.depth <= 3);
+---
+
+{filtered.length > 0 && (
+  <nav class="toc bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+    <h3 class="text-xs font-semibold text-slate-900 dark:text-white mb-3 uppercase tracking-wider">目录</h3>
+    <ul class="space-y-1">
+      {filtered.map(heading => (
+        <li class={heading.depth === 3 ? 'ml-3' : ''}>
+          <a href={`#${heading.slug}`}
+             class="toc-link block text-sm text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 py-0.5 transition-colors"
+             data-heading={heading.slug}>
+            {heading.text}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+)}
+
+<script>
+  const headingEls = document.querySelectorAll('article h1[id], article h2[id], article h3[id]');
+  const tocLinks = document.querySelectorAll<HTMLAnchorElement>('.toc-link');
+
+  if (headingEls.length && tocLinks.length) {
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            tocLinks.forEach(l => l.classList.remove('text-indigo-600', 'dark:text-indigo-400', 'font-medium'));
+            const active = document.querySelector<HTMLAnchorElement>(`.toc-link[data-heading="${entry.target.id}"]`);
+            active?.classList.add('text-indigo-600', 'dark:text-indigo-400', 'font-medium');
+          }
+        });
+      },
+      { rootMargin: '-80px 0px -70% 0px' }
+    );
+    headingEls.forEach(h => observer.observe(h));
+  }
+</script>

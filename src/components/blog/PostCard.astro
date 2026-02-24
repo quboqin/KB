@@ -1,0 +1,51 @@
+---
+import { formatDate } from '@/utils/date';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  post: CollectionEntry<'posts'>;
+}
+
+const { post } = Astro.props;
+const { title, description, pubDate, tags, heroImage } = post.data;
+---
+
+<article class="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600 transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/5">
+  {heroImage && (
+    <a href={`/posts/${post.slug}`} class="block aspect-video overflow-hidden">
+      <img src={heroImage} alt={title}
+           class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+    </a>
+  )}
+
+  <div class="p-6">
+    {tags.length > 0 && (
+      <div class="flex flex-wrap gap-1.5 mb-3">
+        {tags.slice(0, 3).map(tag => (
+          <a href={`/tags/${tag}`}
+             class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
+            #{tag}
+          </a>
+        ))}
+      </div>
+    )}
+
+    <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2 leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+      <a href={`/posts/${post.slug}`}>{title}</a>
+    </h2>
+
+    <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-4 line-clamp-3">
+      {description}
+    </p>
+
+    <div class="flex items-center justify-between">
+      <time class="text-xs text-slate-400 dark:text-slate-500" datetime={pubDate.toISOString()}>
+        {formatDate(pubDate)}
+      </time>
+      <a href={`/posts/${post.slug}`}
+         class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+        阅读全文 →
+      </a>
+    </div>
+  </div>
+</article>

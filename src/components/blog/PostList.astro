@@ -1,0 +1,24 @@
+---
+import PostCard from './PostCard.astro';
+import Pagination from '@/components/ui/Pagination.astro';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  posts: CollectionEntry<'posts'>[];
+  page?: {
+    currentPage: number;
+    lastPage: number;
+    url: { prev?: string; next?: string };
+  };
+}
+
+const { posts, page } = Astro.props;
+---
+
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+  {posts.map(post => <PostCard post={post} />)}
+</div>
+
+{page && page.lastPage > 1 && (
+  <Pagination page={page} />
+)}

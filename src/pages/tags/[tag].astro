@@ -1,0 +1,36 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PostList from '@/components/blog/PostList.astro';
+import { getAllPosts, getAllTags } from '@/utils/posts';
+
+export async function getStaticPaths() {
+  const tags = await getAllTags();
+  const posts = await getAllPosts();
+
+  return tags.map(({ name }) => ({
+    params: { tag: name },
+    props: {
+      tag: name,
+      posts: posts.filter(p => p.data.tags.includes(name)),
+    },
+  }));
+}
+
+const { tag, posts } = Astro.props;
+---
+
+<BaseLayout title={`#${tag}`} description={`标签 #${tag} 的所有文章`}>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="mb-10">
+      <a href="/"
+         class="text-sm text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors">
+        ← 返回首页
+      </a>
+      <h1 class="text-3xl font-bold text-slate-900 dark:text-white mt-4 mb-2">
+        #{tag}
+      </h1>
+      <p class="text-slate-600 dark:text-slate-400">{posts.length} 篇文章</p>
+    </div>
+    <PostList posts={posts} />
+  </div>
+</BaseLayout>
