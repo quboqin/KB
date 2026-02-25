@@ -134,9 +134,13 @@ sequenceDiagram
 
 ## 4. 给 OpenClaw Feishu Plugin 添加日历功能
 
-### A. 飞书开放平台配置
+### A. 一次性授权完整流程
 
-#### 1. 开通日历相关权限（用户身份）
+> 只需在服务器上执行一次。完成后，插件会自动用本地的 `refresh_token` 换取 `user_access_token`，无需再次操作。
+
+#### 1. 飞书开放平台配置
+
+**开通日历权限（用户身份）**
 
 在应用权限里开启以下 scope：
 
@@ -152,75 +156,44 @@ sequenceDiagram
 - `calendar:calendar:subscribe`
 - `calendar:calendar:update`
 
-#### 2. 配置 OAuth 重定向 URL
+**配置 OAuth 重定向 URL**
 
 ```
 https://feishu-oauth.magicefire.com/feishu/oauth/callback
 ```
 
-#### 3. 首次手动获取 user_access_token（OAuth 授权流程）
+---
 
-**Step 1 — 构造授权 URL，引导用户登录**
+#### 2. 修复服务器 DNS（若 curl 报 "Could not resolve host"）
 
-在浏览器打开以下 URL：
+**现象：** `dig`/`nslookup` 能解析，但 `curl` 报 `Could not resolve host`
 
-```
-https://open.feishu.cn/open-apis/authen/v1/authorize
-  ?app_id=cli_a912b7cb0ab8dcbd
-  &redirect_uri=https%3A%2F%2Ffeishu-oauth.magicefire.com%2Ffeishu%2Foauth%2Fcallback
-  &scope=calendar%3Acalendar
-  &state=random_state_string
-```
-
-用户授权后，飞书重定向到回调地址，URL 中携带 `code` 参数（有效期短、一次性）。
-
-**Step 2 — 用 code 换取 access_token**
+**环境：** Netplan + NetworkManager（活跃连接：Wired connection 1 / ens18）
 
 ```bash
-read -s FEISHU_APP_SECRET
-CODE="<CODE_FROM_CALLBACK>"
+# 临时救急（立即生效）
+sudo resolvectl dns ens18 1.1.1.1 8.8.8.8
+sudo resolvectl flush-caches
 
-curl -sS https://open.feishu.cn/open-apis/authen/v1/access_token \
-  -H 'Content-Type: application/json' \
-  -d "{
-    \"app_id\": \"cli_a912b7cb0ab8dcbd\",
-    \"app_secret\": \"$FEISHU_APP_SECRET\",
-    \"grant_type\": \"authorization_code\",
-    \"code\": \"$CODE\"
-  }"
+# 持久修复（重启不丢）
+sudo nmcli con mod "Wired connection 1" ipv4.ignore-auto-dns yes
+sudo nmcli con mod "Wired connection 1" ipv4.dns "1.1.1.1 8.8.8.8"
+sudo nmcli con mod "Wired connection 1" ipv4.dns-priority 10
+sudo nmcli con down "Wired connection 1" && sudo nmcli con up "Wired connection 1"
+sudo resolvectl flush-caches
+
+# 验证
+getent ahosts feishu-oauth.magicefire.com
+curl -I "https://feishu-oauth.magicefire.com/feishu/oauth/callback?code=TEST&state=1"
 ```
-
-响应示例：
-
-```json
-{
-  "code": 0,
-  "data": {
-    "access_token": "u-xxx",
-    "refresh_token": "ur-xxx",
-    "token_type": "Bearer",
-    "expires_in": 7200,
-    "refresh_expires_in": 2592000
-  }
-}
-```
-
-**Step 3 — 保存 refresh_token 供后续自动刷新**
-
-```bash
-echo -n "ur-xxx" > /home/openclaw/.openclaw/secrets/feishu_user_refresh_token
-chmod 600 /home/openclaw/.openclaw/secrets/feishu_user_refresh_token
-```
-
-> **安全提醒：** 若 app_secret 曾泄露到聊天记录，应立即轮换 secret，并使用 `read -s` 方式输入避免进入 history。
 
 ---
 
-### B. Cloudflare / 域名 / Tunnel（回调链路）配置
+#### 3. 搭建 Cloudflare Tunnel（让飞书回调打到本机）
 
-目标：让飞书 OAuth 能回调到本机的 `/feishu/oauth/callback`。
+目标：让飞书 OAuth 重定向到 `https://feishu-oauth.magicefire.com/feishu/oauth/callback`，流量经 Tunnel 转发到本机 `127.0.0.1:8787`。
 
-#### 1. 启动本地回调服务
+**Step 1 — 启动本地回调服务**
 
 ```shell
 cat > /tmp/feishu-oauth-callback.js <<'JS'
@@ -249,27 +222,19 @@ JS
 node /tmp/feishu-oauth-callback.js
 ```
 
-#### 2. 创建并配置 Cloudflare Tunnel
+**Step 2 — 创建命名 Tunnel 并绑定域名**
 
 ```bash
-# 1) 登录 Cloudflare（命名 tunnel 必须）
 cloudflared login
-
-# 2) 创建命名 Tunnel
 cloudflared tunnel create feishu-oauth
-
-# 3) 绑定子域（自动创建 DNS 记录）
 cloudflared tunnel route dns feishu-oauth feishu-oauth.magicefire.com
-
-# 验证 DNS
-dig +short feishu-oauth.magicefire.com
+dig +short feishu-oauth.magicefire.com  # 验证 DNS
 ```
 
-#### 3. 配置 ingress（否则会 503）
-
-创建 `~/.cloudflared/config.yml`（将 `TUNNEL_ID` 替换为第 2 步输出的 UUID）：
+**Step 3 — 配置 ingress**（将 `TUNNEL_ID` 替换为上一步输出的 UUID）
 
 ```yaml
+# ~/.cloudflared/config.yml
 tunnel: TUNNEL_ID
 credentials-file: /home/openclaw/.cloudflared/TUNNEL_ID.json
 
@@ -279,47 +244,86 @@ ingress:
   - service: http_status:404
 ```
 
+**Step 4 — 运行 Tunnel 并自测**
+
 ```bash
-# 4) 运行 Tunnel
 cloudflared tunnel run feishu-oauth
 
-# 5) 自测回调链路
+# 自测回调链路（应返回 200）
 curl -sS -i "https://feishu-oauth.magicefire.com/feishu/oauth/callback?code=TEST&state=1" | head -n 20
 ```
 
-#### 4. 常见坑
-
-- **DNS 记录冲突：** 若 `cloudflared tunnel route dns` 提示 `record already exists`，去 Cloudflare 控制台删除/替换同名记录后重跑
-- **DNS 必须设为 Proxied（橙云）：** 灰云（DNS only）会导致 curl "Could not resolve host"，切换为橙云才正常
+> **常见坑：**
+> - `record already exists`：去 Cloudflare 控制台删除同名记录后重跑
+> - curl 仍报解析失败：DNS 必须设为 **Proxied（橙云）**，灰云不生效
 
 ---
 
-### C. 服务器网络 / DNS 稳定性配置
+#### 4. 执行 OAuth 授权 & 写入 refresh_token
 
-**现象：** dig/nslookup 能解析，但 curl 报 "Could not resolve host"
-
-**环境：** Netplan + NetworkManager（活跃连接：Wired connection 1 / ens18）
+**推荐：用授权脚本（自动打开浏览器 + 输出 refresh_token）**
 
 ```bash
-# 临时救急（立即生效）
-sudo resolvectl dns ens18 1.1.1.1 8.8.8.8
-sudo resolvectl flush-caches
-
-# 持久修复（重启不丢）
-sudo nmcli con mod "Wired connection 1" ipv4.ignore-auto-dns yes
-sudo nmcli con mod "Wired connection 1" ipv4.dns "1.1.1.1 8.8.8.8"
-sudo nmcli con mod "Wired connection 1" ipv4.dns-priority 10
-sudo nmcli con down "Wired connection 1" && sudo nmcli con up "Wired connection 1"
-sudo resolvectl flush-caches
-
-# 验证（这两条是判断"真的好了"的关键）
-getent ahosts feishu-oauth.magicefire.com
-curl -I "https://feishu-oauth.magicefire.com/feishu/oauth/callback?code=TEST&state=1"
+python3 /home/openclaw/.openclaw/workspace/feishu_user_oauth.py
 ```
+
+**备用：手动获取**（适合调试或脚本不可用时）
+
+在浏览器打开以下 URL 完成授权，飞书将携带 `code` 重定向到回调地址：
+
+```
+https://open.feishu.cn/open-apis/authen/v1/authorize
+  ?app_id=cli_a912b7cb0ab8dcbd
+  &redirect_uri=https%3A%2F%2Ffeishu-oauth.magicefire.com%2Ffeishu%2Foauth%2Fcallback
+  &scope=calendar%3Acalendar
+  &state=random_state_string
+```
+
+用回调 URL 里的 `code` 换取 token：
+
+```bash
+read -s FEISHU_APP_SECRET
+CODE="<CODE_FROM_CALLBACK>"
+
+curl -sS https://open.feishu.cn/open-apis/authen/v1/access_token \
+  -H 'Content-Type: application/json' \
+  -d "{
+    \"app_id\": \"cli_a912b7cb0ab8dcbd\",
+    \"app_secret\": \"$FEISHU_APP_SECRET\",
+    \"grant_type\": \"authorization_code\",
+    \"code\": \"$CODE\"
+  }"
+```
+
+响应里 `data.refresh_token`（`ur-...`）即为所需值。
+
+**写入 refresh_token 到固定位置**
+
+```bash
+install -d -m 700 /home/openclaw/.openclaw/secrets
+printf '%s\n' '<PASTE_REFRESH_TOKEN_HERE>' > /home/openclaw/.openclaw/secrets/feishu_user_refresh_token
+chmod 600 /home/openclaw/.openclaw/secrets/feishu_user_refresh_token
+```
+
+> **安全提醒：**
+> - `refresh_token` 很敏感，只落盘不粘贴到聊天记录；若已泄露，立即在飞书侧撤销并重新生成。
+> - 始终用 `read -s` 输入 `app_secret`，避免进入 shell history。
 
 ---
 
-### D. OpenClaw / Feishu 插件代码修改
+#### 5. 验证
+
+```bash
+openclaw plugins info @openclaw/feishu
+openclaw plugins enable @openclaw/feishu
+openclaw gateway restart
+```
+
+调用 `feishu_calendar(auth_mode=user)` 不传 `user_access_token`，插件应自动用本地 `refresh_token` 换取新 token 并返回日历列表。
+
+---
+
+### B. OpenClaw / Feishu 插件代码修改
 
 #### 1. 注册新工具：`feishu_calendar`
 
@@ -378,7 +382,7 @@ await persistRefreshToken(newRefreshToken);  // writeFile(..., mode: 0o600)
 
 ---
 
-### E. 本地密钥文件（最终状态）
+### C. 本地密钥文件（最终状态）
 
 | 文件 | 路径 | 权限 |
 |------|------|------|
@@ -386,7 +390,7 @@ await persistRefreshToken(newRefreshToken);  // writeFile(..., mode: 0o600)
 
 ---
 
-### F. 功能验证结果
+### D. 功能验证结果
 
 - `feishu_calendar (auth_mode=user)` 能列出日历列表（包括 "秦曲波(Bob)"）
 - 能拉取本周日程，新增会议后立即可见
