@@ -9,7 +9,18 @@
       "mcp__github__create_repository",
       "Bash(head:*)",
       "Bash(gh repo:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<'EOF'\nfeat: add Mermaid rendering, dark code blocks, and OpenClaw post\n\n- Disable Shiki syntax highlighting; use plain dark \\(#0d0d0d\\) code blocks\n- Add client-side Mermaid.js rendering in PostLayout \\(theme follows dark mode\\)\n- Add new post: 安装 OpenClaw 遇到的问题 \\(Node版本冲突, 飞书插件修复, 日历集成, patch工作流\\)\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\nEOF\n\\)\" && git push origin main 2>&1)",
+      "Bash(git add README.md CLAUDE.md && git commit -m \"$\\(cat <<'EOF'\ndocs: add README.md and CLAUDE.md\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\nEOF\n\\)\" && git push origin main 2>&1)",
+      "Bash(vercel:*)",
+      "Skill(commit)",
+      "Bash(git commit:*)",
+      "Bash(wc:*)",
+      "Bash(grep:*)",
+      "Bash(echo turndown ok:*)",
+      "Bash(cd:*)",
+      "Bash(python3:*)",
+      "Bash(sed:*)"
     ]
   }
 }

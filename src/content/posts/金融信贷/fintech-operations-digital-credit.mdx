@@ -1,0 +1,113 @@
+---
+title: "Fintech Operations and Digital Credit Architecture: Source Library Overview"
+description: "A curated index of 13 source articles covering digital credit risk, payment systems, BNPL, compliant lending architecture, and fintech operations in China and Southeast Asia."
+pubDate: 2025-01-10
+tags: [fintech, digital-credit, risk-management, payment-systems, BNPL, lending, Indonesia, China]
+category: '金融'
+---
+
+This document is a structured index of source materials covering fintech operations and digital credit architecture risk. Each entry includes the title, key concepts, and a summary of the source.
+
+---
+
+## 1. Introduction to Interest Rates in Credit Business (APR and IRR)
+
+**Keywords:** Credit business, interest rates, APR (nominal annual percentage rate), IRR (internal rate of return / true rate), repayment methods
+
+**Summary:** This article introduces five common repayment structures in consumer credit: revolving/on-demand, interest-first-then-principal, equal principal-and-interest installments, equal principal installments, and equal installments (annuity). It explains how the same nominal APR can produce dramatically different true costs (IRR) depending on the repayment schedule, because the actual time value of money in use varies. The article warns consumers to look through advertised rates and watch out for products that quote a low rate but impose a high true cost.
+
+---
+
+## 2. What Are MOB and Vintage in Big Data Risk Control?
+
+**Keywords:** Big data risk control, MOB (Month on Book), Vintage analysis, delinquency rate, asset quality
+
+**Summary:** This article explains two core metrics in credit risk management: MOB (account age) and Vintage analysis. Using detailed tables and line charts, it shows how to track delinquency rate trends across different loan cohorts (origination months) at successive account ages (MOB0, MOB1, MOB2, etc.). Vintage analysis enables risk teams to compare the health of different monthly lending batches and identify deteriorating asset quality early.
+
+---
+
+## 3. Chapter 2: Overview of Payment, Settlement, Reconciliation, and Accounting Scenarios
+
+**Keywords:** Payment scenarios, clearing and settlement, reconciliation, accounting, payment gateway, ledger system
+
+**Summary:** Using an e-commerce purchase as the walkthrough scenario, this article breaks down the mechanics of payment, clearing, settlement, reconciliation, and accounting. It details the mapping relationships between business orders, transaction orders, clearing orders, and settlement orders (one-to-many and many-to-one relationships), as well as information flows and double-entry bookkeeping rules between the data center, clearing system, accounting system, and underlying ledger.
+
+---
+
+## 4. Kredivo Card & BNPL Deep Dive
+
+**Keywords:** Kredivo, BNPL (Buy Now Pay Later), Flexi Card, Infinite Card (virtual credit card), OJK regulatory compliance, card issuance license, unified credit limit
+
+**Summary:** This research note provides an in-depth analysis of Indonesian fintech Kredivo's strategy for credit-card-like and BNPL products, and the compliance challenges encountered. It documents the full sequence of events leading to the suspension of Flexi Card and Infinite Card by regulators (OJK/BI) due to the absence of the required payment and card-issuance licenses. The document also analyzes Kredivo's strategic rationale for viewing card products as an "open-loop" distribution channel to expand usage scenarios, and discloses monthly GMV breakdown, direct-merchant MDR rates, and the internal treasury synergies provided by subsidiary Krom Bank.
+
+---
+
+## 5. The Logic of Compliant Lending and Credit Architecture
+
+**Keywords:** Compliant architecture, data disconnection ("断直连"), financing guarantee model, revenue-sharing model, licensed credit bureau, interest rate cap
+
+**Summary:** This document uses three core logic diagrams to explain the underlying compliant architecture of China's assisted-lending (助贷) market in 2025. The first diagram shows post-"data disconnection" data flows, with licensed credit bureaus becoming the mandatory gateway for all data transmission. The second diagram analyzes the financing guarantee model, where a guarantee company absorbs default risk — and shows how profit margins are squeezed under the 24% APR ceiling. The third diagram illustrates the asset-light "revenue sharing" model, where platforms return to being pure technology service providers while banks independently bear the core credit risk.
+
+---
+
+## 6. Complete Payment System Architecture
+
+**Keywords:** Payment system architecture, payment products (quick payment, online banking, direct debit, etc.), business processes (parameter validation, payment routing), support systems, core layer
+
+**Summary:** This article systematically summarizes the overall business product and technical architecture of an internet payment platform. It covers ten common payment product types including quick payment and online banking, maps out the core business processing flow (parameter validation, payment routing, risk assessment), and divides the complete payment system into three tiers: the support layer, the core layer (payment core, base services, funds, risk and credit), and the product/application layer.
+
+---
+
+## 7. A Comprehensive Deep Dive into Online and Offline Acquiring
+
+**Keywords:** Acquiring business, third-party payment, payment gateway model, account payment model, quick payment, POS acquiring, UnionPay electronic
+
+**Summary:** This article deeply analyzes the operating mechanics and system interactions of both online and offline payment acquiring. It distinguishes between the payment gateway model and the account payment model, and explains the mechanics and UX differences of four major bank interface types: online banking, quick payment, direct debit, and POS. For offline POS acquiring, it breaks down the fund flows and fee-sharing among the issuing bank, acquiring bank, UnionPay, and third-party payment processors. For online acquiring, it highlights the fundamental difference between third-party payment processors acting as "acquirer + router" versus traditional offline acquiring.
+
+---
+
+## 8. Comparison of China and Indonesia Financing Guarantee Models
+
+**Keywords:** Financing guarantee, credit insurance, cross-border fintech, leverage ratio, proportional compensation, insurtech aggregators (Fuse/Qoala)
+
+**Summary:** This report comprehensively compares the divergent evolutionary paths China and Indonesia have taken in managing digital credit risk. China has established a heavily regulated, capital-intensive model centered on "financing guarantees," with a 10x leverage cap and 100% full-coverage indemnification. Indonesia, guided by OJK, has developed a risk-sharing model centered on credit insurance, characterized by actuarial pricing, 70–90% proportional compensation, lengthy 90-day waiting periods, and an ecosystem of insurtech aggregators such as Fuse and Qoala.
+
+---
+
+## 9. Our 7-Day Product Lives in the Pocket of an Indonesian Ojek Driver
+
+**Keywords:** Cash loans, term management, cash flow matching, risk exposure window, credit probing, user lifetime value (LTV)
+
+**Summary:** From the perspective of a risk model engineer, this article explores the internal logic behind the widespread use of 7-day and 14-day ultra-short loan tenors in emerging-market cash loan businesses (e.g., Indonesia, Mexico). It argues that short tenors are designed to precisely match the weekly cash flow rhythm of blue-collar and gig workers (such as motorcycle taxi drivers), effectively compressing the risk exposure window under conditions of information asymmetry. Short-tenor products also serve as "scouts" for risk models (enabling rapid feedback and iteration) and as incubators for building credit histories among subprime users — though at the cost of user experience and elevated operational costs.
+
+---
+
+## 10. The Full Payment Chain: Transaction, Clearing, Settlement, and Reconciliation in One View
+
+**Keywords:** Payment chain, payment gateway, transaction system, ledger system, reconciliation system, merchant settlement system
+
+**Summary:** Using a full-chain perspective and sequence diagrams, this article traces the complete underlying system flows from a consumer initiating a payment to funds being settled to a merchant. It defines the responsibilities and interactions of multiple core subsystems: payment gateway, business system, transaction system (the payment hub), channel system, ledger system (managing account balances), accounting system, reconciliation system, and merchant settlement.
+
+---
+
+## 11. Analysis of the Relationships Among Financing Guarantee, Assisted Lending, and Credit Bureaus
+
+**Keywords:** Assisted-lending platforms (助贷), financing guarantee, data disconnection, credit bureaus, revenue-sharing model, compliant restructuring
+
+**Summary:** This report examines the deep restructuring of China's digital credit ecosystem under new regulations including the Personal Information Protection Law and the "data disconnection" (断直连) policy. It analyzes the divergence of the assisted-lending market into the capital-intensive "guarantee-backed model" and the asset-light "revenue-sharing model," discusses how financing guarantee companies are shifting from "conduit" to "substantive risk controller" due to leverage constraints, and focuses on how "data disconnection" grants licensed credit bureaus legal authority over data aggregation — redistributing data power and profit structures throughout the value chain.
+
+---
+
+## 12. Mid-Loan Management: The Silent War of Credit Risk Control
+
+**Keywords:** Mid-loan management, B-card (behavioral scorecard), risk early warning, dynamic credit limit adjustment, precision marketing, weak signals
+
+**Summary:** This article frames mid-loan management as a "silent war" that determines the life or death of a credit business and the lifetime value of users. It details the three-pronged "trident" system of mid-loan management: risk early warning (capturing strong signals like co-borrowing stress and weak signals like behavioral changes), dynamic credit limit adjustment (as a sword to reward good borrowers and penalize bad ones, controlling risk exposure), and precision marketing (driving growth through risk-based segmentation). A case study of a customer named "Budi" vividly illustrates how mid-loan strategy can intercept deteriorating accounts before they become write-offs.
+
+---
+
+## 13. Introduction to Bank Card Business
+
+**Keywords:** Bank card business, card networks, Visa, Mastercard, four-party model, three-party model
+
+**Summary:** This is a concise course outline on the bank card industry, covering the global card network ecosystem. It introduces major global card networks (Visa, Mastercard, American Express), distinguishes between the four-party model and the three-party model, and covers the core modules of issuing bank operations: regulatory compliance, go-live preparation, and business models.
