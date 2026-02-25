@@ -3,10 +3,15 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import PostList from '@/components/blog/PostList.astro';
 import TagCloud from '@/components/ui/TagCloud.astro';
 import RSSLink from '@/components/widgets/RSSLink.astro';
-import { getAllPosts, getAllTags } from '@/utils/posts';
+import { getAllPosts, getAllTags, getAllCategories } from '@/utils/posts';
 
 const posts = await getAllPosts();
 const tags = await getAllTags();
+const categories = await getAllCategories();
+
+const categoryIcons: Record<string, string> = {
+  '技术': '💻', '金融': '📈', 'AI': '🤖', '生活': '🌱', '其他': '📌',
+};
 ---
 
 <BaseLayout title="首页">
@@ -27,6 +32,25 @@ const tags = await getAllTags();
         <RSSLink />
       </div>
     </section>
+
+    <!-- Category Nav -->
+    {categories.length > 0 && (
+      <section class="mb-10">
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">分类</h2>
+        <div class="flex flex-wrap gap-3">
+          {categories.map(({ name, count }) => (
+            <a
+              href={`/categories/${name}`}
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-indigo-100 hover:text-indigo-700 dark:hover:bg-indigo-900/40 dark:hover:text-indigo-400 font-medium text-sm transition-colors"
+            >
+              <span>{categoryIcons[name] ?? '📂'}</span>
+              <span>{name}</span>
+              <span class="text-xs text-slate-400 dark:text-slate-500">({count})</span>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
 
     <!-- Tag Cloud -->
     {tags.length > 0 && (

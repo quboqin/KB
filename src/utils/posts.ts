@@ -24,6 +24,20 @@ export async function getRelatedPosts(
     .map(({ post }) => post);
 }
 
+export async function getAllCategories(): Promise<{ name: string; count: number }[]> {
+  const posts = await getAllPosts();
+  const catMap = new Map<string, number>();
+
+  for (const post of posts) {
+    const cat = post.data.category;
+    catMap.set(cat, (catMap.get(cat) ?? 0) + 1);
+  }
+
+  return Array.from(catMap.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
 export async function getAllTags(): Promise<{ name: string; count: number }[]> {
   const posts = await getAllPosts();
   const tagMap = new Map<string, number>();

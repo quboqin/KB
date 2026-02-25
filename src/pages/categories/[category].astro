@@ -1,0 +1,45 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PostList from '@/components/blog/PostList.astro';
+import { getAllPosts, getAllCategories } from '@/utils/posts';
+
+export async function getStaticPaths() {
+  const categories = await getAllCategories();
+  const posts = await getAllPosts();
+
+  return categories.map(({ name }) => ({
+    params: { category: name },
+    props: {
+      category: name,
+      posts: posts.filter(p => p.data.category === name),
+    },
+  }));
+}
+
+const { category, posts } = Astro.props;
+
+const categoryIcons: Record<string, string> = {
+  '技术': '💻',
+  '金融': '📈',
+  'AI': '🤖',
+  '生活': '🌱',
+  '其他': '📌',
+};
+const icon = categoryIcons[category] ?? '📂';
+---
+
+<BaseLayout title={`${icon} ${category}`} description={`分类「${category}」下的所有文章`}>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="mb-10">
+      <a href="/"
+         class="text-sm text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors">
+        ← 返回首页
+      </a>
+      <h1 class="text-3xl font-bold text-slate-900 dark:text-white mt-4 mb-2">
+        {icon} {category}
+      </h1>
+      <p class="text-slate-600 dark:text-slate-400">{posts.length} 篇文章</p>
+    </div>
+    <PostList posts={posts} />
+  </div>
+</BaseLayout>
