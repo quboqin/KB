@@ -1,0 +1,14 @@
+大数据风控的MOB、Vintage是什么？	https://zhuanlan.zhihu.com/p/192879721
+完整的支付系统整体架构！	https://segmentfault.com/a/1190000038821423
+贷中管理：信贷风控的"无声战争"	https://mp.weixin.qq.com/s/qxG_0vR2UYnWLX6u8UCAQw
+融担助贷征信关系分析	
+万字长文，详解线上线下收单业务	https://www.woshipm.com/pd/567944.html
+万字长文，详解线上线下收单业务：系统交互图（二）	https://www.woshipm.com/pd/568391.html
+我们的7天产品，藏在印尼摩的师傅的口袋里	https://mp.weixin.qq.com/s/ohkq1ABfDOcGCbvDJLAxug?mpshare=1&scene=1&srcid=0815cOohyz5cLqwIo7grwuwH&sharer_shareinfo=ae005c024352376e2a51a905d500be80&sharer_shareinfo_first=ae005c024352376e2a51a905d500be80#rd
+信贷业务中的利率介绍（ APR 和 IRR ）	https://zhuanlan.zhihu.com/p/161405128
+银行卡业务介绍	
+支付、清结算、对账、核算场景概览 - 知乎	https://www.toutiao.com/article/7257407580677341748/?app=news_article&group_id=7257407580677341748&is_new_connect=0&is_new_user=0&req_id=20230725112516E79F7CC02919C45A252B&source=m_redirect&timestamp=1690255517&use_new_style=1&wid=1690255578035
+支付人必看！交易、清算、结算、对账链路一图流 - 今日头条	https://www.woshipm.com/pd/5869232.html
+中印融资担保模式对比	
+Kredivo Card & BNPL Deep Dive	
+The Logic of Compliant Lending and Credit Arch	
