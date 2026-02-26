@@ -1,0 +1,58 @@
+{
+  "大数据风控的MOB、Vintage是什么？": {
+    "slug": "mob-vintage-explained",
+    "description": "讲清 MOB 与 Vintage 的定义、统计口径，并用示例说明如何读懂 Vintage 曲线。"
+  },
+  "完整的支付系统整体架构！": {
+    "slug": "payment-system-architecture",
+    "description": "从支付产品分类与模块拆解入手，梳理支付系统的整体架构、关键接口与主流程。"
+  },
+  "贷中管理：信贷风控的\"无声战争\"": {
+    "slug": "in-loan-management-silent-war",
+    "description": "系统拆解贷中管理的预警、调额与经营打法，说明如何在贷中平衡风险控制与增长。"
+  },
+  "融担助贷征信关系分析": {
+    "slug": "guarantee-assist-loan-credit-reporting",
+    "description": "分析融担助贷业务中各方的征信报送与查询关系，梳理常见模式与合规关注点。"
+  },
+  "万字长文，详解线上线下收单业务": {
+    "slug": "acquiring-business-deep-dive",
+    "description": "详解线上与线下收单的业务链路、核心系统与关键参与方，帮助理解收单全流程。"
+  },
+  "万字长文，详解线上线下收单业务：系统交互图（二）": {
+    "slug": "acquiring-business-interactions-2",
+    "description": "以系统交互视角补全收单业务链路，重点展示模块间的调用关系与关键时序。"
+  },
+  "我们的7天产品，藏在印尼摩的师傅的口袋里": {
+    "slug": "seven-day-product-in-indonesia",
+    "description": "用真实故事复盘产品增长与渠道触达的路径，说明如何用短周期产品验证市场与用户。"
+  },
+  "信贷业务中的利率介绍（ APR 和 IRR ）": {
+    "slug": "apr-vs-irr-in-lending",
+    "description": "解释 APR 与 IRR 的定义与计算口径，并说明在信贷定价、对比与披露中的用法差异。"
+  },
+  "银行卡业务介绍": {
+    "slug": "bank-card-business-overview",
+    "description": "从发卡、交易到清算结算，概览银行卡业务全链路与关键角色，建立业务全局认知。"
+  },
+  "支付、清结算、对账、核算场景概览 - 知乎": {
+    "slug": "payment-clearing-recon-accounting-overview",
+    "description": "概览支付、清结算、对账与核算的核心概念与场景边界，帮助快速建立业务框架。"
+  },
+  "支付人必看！交易、清算、结算、对账链路一图流 - 今日头条": {
+    "slug": "trade-clearing-settlement-recon-one-graphic",
+    "description": "用一张链路图串起交易、清算、结算与对账的关键环节，梳理各系统的职责与数据流。"
+  },
+  "中印融资担保模式对比": {
+    "slug": "china-india-financing-guarantee-comparison",
+    "description": "对比中印融资担保的典型模式、参与方与风险分担机制，提炼可借鉴的产品与合规点。"
+  },
+  "Kredivo Card & BNPL Deep Dive": {
+    "slug": "kredivo-card-bnpl-deep-dive",
+    "description": "深度解析 Kredivo 的卡产品与 BNPL 组合打法，关注产品结构、风控逻辑与商业模型。"
+  },
+  "The Logic of Compliant Lending and Credit Arch": {
+    "slug": "compliant-lending-credit-architecture",
+    "description": "梳理合规放贷的关键约束与信用架构设计思路，覆盖流程、数据、风险与系统边界。"
+  }
+}

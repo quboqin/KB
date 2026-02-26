@@ -27,3 +27,6 @@ pnpm-debug.log*
 
 # Cloudflare
 .wrangler
+
+# pipeline caches
+resources/_cache/
