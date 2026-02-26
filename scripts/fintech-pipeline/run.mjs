@@ -356,13 +356,23 @@ async function processLocalTask(task, usedSlugs, slugMap, metaMap, opts) {
   if (ext === '.md' || ext === '.mdx') {
     body = await fs.readFile(srcPath, 'utf8');
   } else if (ext === '.pdf') {
-    // Best-effort structured conversion via pdfjs-dist
+    // Better PDF->MD conversion (layout + tables + images) via pymupdf4llm.
     const { execFile } = await import('node:child_process');
     const { promisify } = await import('node:util');
     const pexec = promisify(execFile);
-    const scriptPath = path.join(ROOT, 'scripts/fintech-pipeline/pdf_to_markdown.mjs');
+
+    const postAssetsDir = path.join(ASSETS_DIR, slug);
+    if (!opts.dryRun) await fs.mkdir(postAssetsDir, { recursive: true });
+
+    const py = path.join(ROOT, 'scripts/fintech-pipeline/pdf_to_markdown_pymupdf4llm.py');
+    const venvPy = path.join(ROOT, '.venv-pdf/bin/python3');
+
     try {
-      const { stdout } = await pexec('node', [scriptPath, srcPath], { maxBuffer: 20 * 1024 * 1024 });
+      const { stdout } = await pexec(
+        venvPy,
+        [py, srcPath, postAssetsDir, `./assets/${slug}`],
+        { maxBuffer: 50 * 1024 * 1024 }
+      );
       body = stdout.trim();
     } catch (e) {
       body = `> TODO(PDF): Convert PDF to markdown with structure.\n\nSource file: ${path.relative(ROOT, srcPath)}\n`;
