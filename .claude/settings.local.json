@@ -20,7 +20,14 @@
       "Bash(echo turndown ok:*)",
       "Bash(cd:*)",
       "Bash(python3:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "WebFetch(domain:segmentfault.com)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_evaluate",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_run_code",
+      "mcp__plugin_playwright_playwright__browser_network_requests",
+      "Bash(curl:*)"
     ]
   }
 }
