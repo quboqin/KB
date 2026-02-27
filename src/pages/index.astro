@@ -18,7 +18,7 @@ const categoryIcons: Record<string, string> = {
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <!-- Hero -->
     <section class="text-center mb-16">
-      <h1 class="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white mb-4 leading-tight">
+      <h1 class="text-4xl sm:text-5xl font-medium text-slate-900 dark:text-white mb-4 leading-tight">
         🧠 KB with AI
       </h1>
       <p class="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
@@ -36,7 +36,7 @@ const categoryIcons: Record<string, string> = {
     <!-- Category Nav -->
     {categories.length > 0 && (
       <section class="mb-10">
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">分类</h2>
+        <h2 class="text-lg font-medium text-slate-900 dark:text-white mb-4">分类</h2>
         <div class="flex flex-wrap gap-3">
           {categories.map(({ name, count }) => (
             <a
@@ -55,14 +55,14 @@ const categoryIcons: Record<string, string> = {
     <!-- Tag Cloud -->
     {tags.length > 0 && (
       <section class="mb-12">
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">热门标签</h2>
+        <h2 class="text-lg font-medium text-slate-900 dark:text-white mb-4">热门标签</h2>
         <TagCloud tags={tags.slice(0, 20)} />
       </section>
     )}
 
     <!-- Posts Grid -->
     <section id="posts">
-      <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-8">最新文章</h2>
+      <h2 class="text-2xl font-medium text-slate-900 dark:text-white mb-8">最新文章</h2>
       {posts.length > 0 ? (
         <PostList posts={posts} />
       ) : (
