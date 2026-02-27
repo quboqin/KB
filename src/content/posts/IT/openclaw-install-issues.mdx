@@ -446,6 +446,77 @@ wc -l patches/feishu-calendar.patch
 - `openclaw gateway restart`
 - 打印 `openclaw status` 头部做验证
 
+#### Step 3.1 — 常见失败原因（2026.2.x 之后容易踩）
+
+如果你发现脚本“跑了但没 patch 上”，通常是下面两个原因之一：
+
+**原因 A：全局 OpenClaw 目录不是 git 仓库**
+
+`$(npm root -g)/openclaw` 是 npm/pnpm 安装出来的文件夹，默认 **没有 `.git/`**。
+此时 `git apply` 可能无法正常工作（尤其是 patch 里包含 `create mode` / 新文件）。
+
+**原因 B：sudo 需要密码，但脚本运行环境没有交互 TTY**
+
+会看到类似报错：
+
+```
+sudo: a terminal is required to read the password
+sudo: a password is required
+```
+
+#### Step 3.2 — 推荐修复：用“复制文件 + 编译 JS”替代 git apply
+
+适用场景：你 patch 的是 **extensions/feishu** 这种 TypeScript 插件代码。
+
+> 背景：Feishu 插件入口在 `extensions/feishu/package.json` 里声明 `extensions: ["./index.ts"]`，但运行时实际会 import `./src/*.js`。
+> 所以只复制 `.ts` 往往不够，需要把对应文件编译成 `.js`。
+
+**Step 1 — 复制改动文件到全局 OpenClaw**
+
+```bash
+GLOBAL_OPENCLAW="$(npm root -g)/openclaw"
+
+# 以 feishu calendar patch 为例
+cp ~/magic/vibe-coding/openclaw/extensions/feishu/src/calendar.ts \
+  "$GLOBAL_OPENCLAW/extensions/feishu/src/calendar.ts"
+
+# index.ts 建议直接对照本地仓库内容同步（避免手工 sed 破坏 export 块）
+cp ~/magic/vibe-coding/openclaw/extensions/feishu/index.ts \
+  "$GLOBAL_OPENCLAW/extensions/feishu/index.ts"
+```
+
+**Step 2 — 在全局 Feishu 扩展目录里装 typescript 并编译**
+
+```bash
+cd "$GLOBAL_OPENCLAW/extensions/feishu"
+
+# 安装编译器（只装在这个扩展目录，不污染全局）
+npm install --save-dev typescript.5.4
+
+# 编译关键入口 + 新增文件
+npx tsc \
+  --target ES2022 \
+  --module NodeNext \
+  --moduleResolution NodeNext \
+  --esModuleInterop \
+  --skipLibCheck \
+  --outDir . \
+  src/calendar.ts index.ts
+
+# 关键检查：必须有这两个文件
+ls -la index.js src/calendar.js
+```
+
+> 备注：编译过程中可能会看到某些 TS 警告（例如 `toSorted`），但只要 `index.js` 和 `src/calendar.js` 产出即可先继续验证。
+
+**Step 3 — 重启网关并验证插件加载**
+
+```bash
+openclaw gateway restart
+openclaw status | head -n 20
+openclaw skills list | rg -i "feishu_calendar|feishu_"
+```
+
 ### Step 4 — 官方版本更新后重新应用
 
 ```bash
