@@ -470,6 +470,8 @@ sudo: a password is required
 
 > 背景：Feishu 插件入口在 `extensions/feishu/package.json` 里声明 `extensions: ["./index.ts"]`，但运行时实际会 import `./src/*.js`。
 > 所以只复制 `.ts` 往往不够，需要把对应文件编译成 `.js`。
+>
+> 如果你已经确认报错的根因是“缺少 `.js` 文件”，通常说明 `calendar.ts` 没有被正确编译/加载。这时不必整仓重建 OpenClaw，先在全局扩展目录里把缺失的文件补编译出来即可。
 
 **Step 1 — 复制改动文件到全局 OpenClaw**
 
@@ -485,13 +487,32 @@ cp ~/magic/vibe-coding/openclaw/extensions/feishu/index.ts \
   "$GLOBAL_OPENCLAW/extensions/feishu/index.ts"
 ```
 
-**Step 2 — 在全局 Feishu 扩展目录里装 typescript 并编译**
+**Step 2 — 快速修复：只补编译缺失的 `calendar.js`**
+
+如果你的目标只是先让日历功能恢复，而 `index.js` 已经存在，可以直接执行：
+
+```bash
+cd /home/openclaw/.nvm/versions/node/v22.22.0/lib/node_modules/openclaw/extensions/feishu
+npx tsc src/calendar.ts \
+  --outDir . \
+  --module esnext \
+  --moduleResolution node \
+  --esModuleInterop \
+  --target es2022
+
+# 确认文件已经生成
+ls -la src/calendar.js
+```
+
+这一步对应的是“选项 2：手动把 `calendar.ts` 编译成 `calendar.js`”，优点是快，适合线上先恢复。
+
+**Step 2.1 — 更稳妥的做法：连同入口一起重新编译**
 
 ```bash
 cd "$GLOBAL_OPENCLAW/extensions/feishu"
 
 # 安装编译器（只装在这个扩展目录，不污染全局）
-npm install --save-dev typescript.5.4
+npm install --save-dev typescript@5.4
 
 # 编译关键入口 + 新增文件
 npx tsc \
@@ -507,7 +528,7 @@ npx tsc \
 ls -la index.js src/calendar.js
 ```
 
-> 备注：编译过程中可能会看到某些 TS 警告（例如 `toSorted`），但只要 `index.js` 和 `src/calendar.js` 产出即可先继续验证。
+> 备注：编译过程中可能会看到某些 TS 警告（例如 `toSorted`），但只要 `src/calendar.js` 已经产出，就可以先继续验证；如果 `index.js` 也一并重编译成功会更稳妥。
 
 **Step 3 — 重启网关并验证插件加载**
 
