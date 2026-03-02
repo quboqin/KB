@@ -1,0 +1,547 @@
+---
+title: "OpenClaw 上网生态全景扫描"
+description: "AI Agent 上网的完整管道：从搜索发现、内容提取、浏览器交互到链上交易。覆盖 200+ 信息源、35+ 工具/平台的 2025-2026 年度现状报告。"
+pubDate: 2026-03-02
+tags: ["AI Agent", "浏览器自动化", "MCP", "Web3", "OpenClaw", "Browser-Use", "GUI Agent"]
+category: AI
+---
+
+> 原文作者：李韭二 @lijiuer92，发布于 X（Twitter），数据截至 2026 年 3 月 1 日。
+> 基于与 Manus、Google Gemini Deepsearch 以及 SuperGrok 综合分析，覆盖 200+ 个信息源、35+ 个工具/平台，经三轮 fact-check 后与独立研究报告交叉验证。
+
+---
+
+## 先建立一个整体图景
+
+AI Agent 上网，本质上是一条有四层的管道：
+
+```
+搜索发现 → 内容提取 → 浏览器交互 → 链上交易
+  最便宜                              最昂贵
+```
+
+聪明的 Agent 设计是：**能用上游解决的，绝不往下走**。搜索 API 能找到的，不开浏览器；能直接提取内容的，不做交互。浏览器是最后手段，因为它最慢、最贵、最容易出错。
+
+2025-2026 年，这条管道的每一层都在经历从实验到生产的质变：
+
+- Browser-Use 拿到 $17M 融资和 79K GitHub stars，BrowserBase 以 $300M 估值完成 B 轮
+- Google Chrome 直接内置了 Gemini 3 驱动的 Auto Browse
+- Anthropic 收购 Vercept（SAM 发明人 Ross Girshick 团队）押注视觉感知
+- MCP 协议被捐给 Linux Foundation 成为行业标准
+- Exa.ai 以 $700M 估值完成 B 轮，x402 协议实现了 AI-to-AI 原生支付
+- WebArena 基准从 14% 攀升至 72.7%，距人类 78.24% 仅差 5.5pp
+
+---
+
+## 一、读懂浏览器自动化，先搞清楚两个基础概念
+
+在深入各种工具之前，有两个概念几乎所有人都绕不过去。
+
+### CDP：浏览器的"遥控器协议"
+
+**CDP（Chrome DevTools Protocol）** 是 Google 官方的浏览器调试协议——一套基于 WebSocket 的 JSON 指令集，让外部程序能控制 Chrome 的一切：点击、截图、读取 DOM、执行 JS……
+
+所有浏览器自动化工具，不管包装得多高级，最终都在通过 CDP 和 Chrome 内核通话。CDP 是地基。
+
+### Playwright：微软做的"地基上的地基"
+
+**Playwright** 是微软 2020 年发布的浏览器自动化框架（核心团队来自 Google Puppeteer 项目）。它把 CDP 的低层指令封装成了好用的 API，同时支持 Chromium、Firefox、WebKit。
+
+Playwright 在这个生态里的渗透面极广：
+
+- **Browser-Use** 底层跑在 Playwright 上
+- **OpenClaw 的快照系统**直接调用 Playwright 内部 API
+- **Stagehand v1/v2** 基于 Playwright（v3 已脱离，改成裸 CDP，速度提升 44%）
+- **微软自己**又把 Playwright 包成了 MCP server（Playwright MCP，~25K stars）
+- **Vercel agent-browser** 的宣传语是"比 Playwright MCP 节省 82-93% 上下文"——以打败它为目标
+
+Playwright 是这个生态里隐形的地基。批评"Shadow DOM 是 2026 年头号架构弱点"，本质上也是在批评 Playwright MCP 的局限。
+
+---
+
+## 二、OpenClaw 的浏览器架构
+
+理解了 CDP，再看 OpenClaw 的架构就清晰很多。
+
+### 两层抽象
+
+```
+你的代码 / Agent
+      ↓
+Control Service HTTP API（18791）   ← OpenClaw 封装的高层接口
+      ↓
+CDP                                 ← 底层浏览器协议
+      ↓
+Chromium 实例
+```
+
+**Control Service** 是 OpenClaw 对外暴露的 HTTP REST API，你不需要直接写 CDP 指令，调这个 API 就行。
+
+### 端口设计：一个数字推导出整个系统
+
+所有服务端口从一个基数 `gateway.port`（默认 18789）推导：
+
+| 端口 | 服务 | 说明 |
+|------|------|------|
+| 18789 | Gateway | 主入口 |
+| 18790 | Bridge | 内部桥接 |
+| 18791 | Control Service | HTTP API（只绑定 loopback，安全隔离） |
+| 18792 | CDP Relay | Chrome 扩展的 WebSocket 桥接 |
+| 18800-18899 | 托管浏览器 CDP | 每个浏览器实例一个专用端口 |
+
+优点是确定性：知道 gateway 端口就能推算所有其他端口。代价是 CLI 硬编码 18791，自定义端口时整个系统会崩溃。
+
+### 三种控制模式：水管接到哪里
+
+三种模式解决的是同一个问题：**CDP 怎么连到浏览器？** 区别在于浏览器在哪、通过什么路径。
+
+**模式一：OpenClaw 托管浏览器**（最干净）
+
+```
+你的代码 → Control Service API (18791) → CDP 直连 (18800+) → OpenClaw 管理的 Chromium
+```
+
+OpenClaw 全权管理浏览器生命周期，每个 profile 独立隔离。适合需要干净环境的自动化任务。
+
+**模式二：Chrome 扩展 Relay**（最真实，也最脆弱）
+
+```
+你的代码 → Gateway (18789) → CDP Relay (18792, WebSocket) → Chrome 扩展 → chrome.debugger API → 用户现有 Chrome 的标签页
+```
+
+CDP 命令要经过三跳中转，才能控制用户已经打开的 Chrome 标签页。价值在于：能拿到用户**真实的 cookies 和登录态**，不需要重新登录任何网站。
+
+代价是这条链路每个节点都可能断——WebSocket 断连、Chrome 每隔约 30 秒会杀掉空闲的 service worker、标签页切换时状态丢失。这是 OpenClaw 目前 bug 最密集的区域。
+
+**模式三：远程 CDP**（最灵活）
+
+```
+你的代码 → Control Service API (18791) → 你提供的 CDP URL → 远程 Chromium（Docker/云端）
+```
+
+你自己负责启动并暴露 CDP 端口（如 `chromium --remote-debugging-port=9222`），OpenClaw 直接接入。用于分布式部署。
+
+**关键认识：** 三种模式对外暴露的 Control Service API 是一样的——底层换了哪条 CDP 路径，对调用方透明。三种模式是**水管**，下一章的四条技术路线是**水怎么用**，两个维度正交。
+
+### 快照系统：OpenClaw 的核心创新
+
+连上浏览器之后，AI 怎么"读懂"页面？传统方案是截图，但截图的 base64 编码轻松达到数 MB，一次操作就能撑爆上下文窗口。
+
+OpenClaw 的答案是**语义快照（Semantic Snapshot）**：把网页转成结构化文本：
+
+```
+button "登录" [ref=e1]
+input "邮箱" [ref=e2]
+link "忘记密码" [ref=e3]
+```
+
+AI 读这份文本，识别出 `e2` 是邮箱输入框，发指令填入内容；再识别出 `e1` 是登录按钮，发指令点击。整个过程不需要"看图"。
+
+这个快照系统实际上调用了 Playwright 的内部 accessibility snapshot API——这是 OpenClaw 站在 Playwright 肩膀上的核心创新。
+
+---
+
+## 三、AI 怎么"看"网页——四条技术路线
+
+连接建立之后（三种模式解决的问题），AI 面临的下一个问题是：**怎么理解这个页面、决定点哪里？**
+
+这里有四种根本不同的思路：
+
+### 路线一：纯视觉（截图 + LLM）
+
+```
+CDP 截图 → base64 图片 → 视觉 LLM → 输出坐标 → CDP 执行点击
+```
+
+代表：Claude Computer Use、OpenAI Operator。
+
+优点：最通用，什么网站都能对付。缺点：慢、贵（图片 token 消耗巨大）、坐标不精确。
+
+### 路线二：纯 DOM / 可访问性树
+
+```
+CDP 提取 a11y tree → 压缩成结构化文本 → LLM → 输出 ref 编号 → CDP 执行
+```
+
+代表：Playwright MCP（微软出品）。OpenClaw 的快照系统也走这条路。
+
+优点：快、token 成本低、操作精确。**致命盲点：Shadow DOM**（下文详述）。
+
+### 路线三：Hybrid——正在赢的路线
+
+```
+优先走可访问性树，遇到 Shadow DOM 盲点时自动补截图
+```
+
+代表：Stagehand、Browser-Use。
+
+兼得两家之长——大部分情况走低成本的文本路线，只在必要时才动用昂贵的视觉路线。
+
+### 路线四：自然语言到动作
+
+用户说"帮我订机票"，Agent 直接端到端执行。代表：MultiOn、Skyvern。最不可预测，但用户体验最简单。
+
+**结论：Hybrid 路线已经赢了。** 这不是预测，是既成事实——资金最多的公司（BrowserBase $67.5M）、stars 最多的开源项目（Browser-Use 79K）、以及最大的云厂商（Google Chrome Auto Browse）都在走 Hybrid。
+
+---
+
+## 四、Shadow DOM：2026 年最大的技术障碍
+
+路线二（可访问性树）有一个无法回避的死穴，值得单独解释。
+
+### 什么是 Shadow DOM
+
+普通网页，Playwright 可以完整看到页面结构：
+
+```html
+<!-- 普通 DOM，Playwright 完全可见 -->
+<form>
+  <input type="email" placeholder="邮箱" />
+  <button>登录</button>   ← AI 能看到，能操作
+</form>
+```
+
+使用 Shadow DOM 的网页：
+
+```html
+<!-- Shadow DOM，Playwright 在墙外 -->
+<my-login-form>
+  ← #shadow-root（封装边界）
+      <input type="email" />   ← Playwright 看不到
+      <button>登录</button>    ← Playwright 看不到
+</my-login-form>
+```
+
+`#shadow-root` 是一道硬隔离边界。可访问性树到这里就停了，AI 只能看到 `<my-login-form>` 这个壳，里面有什么完全不透明。
+
+### 为什么这是大问题
+
+Shadow DOM 是 Web Components 标准的核心机制，主流设计系统大量使用：Material Web（Google）、Shoelace、SAP UI5、Salesforce LWC……企业系统、SaaS 后台、金融平台用这类组件库的比例很高——偏偏这些是 AI Agent 最想自动化的场景。
+
+### Agent 碰到 Shadow DOM 的三种结局
+
+1. **直接失败**：可访问性树里只看到不知名的自定义标签，任务卡死
+2. **退回截图**：用图片识别按钮位置，坐标不精确，成功率下降
+3. **Hybrid 救场**：路线三的做法——自动补截图接手，这是 Hybrid 路线赢的原因之一
+
+### 根本解法：WebMCP（但现在不可用）
+
+Shadow DOM 是"Agent 努力解析网页结构"这个思路的内在局限。
+
+**WebMCP**（W3C 草案，2026.2）试图从根本上换掉这个思路：
+
+```
+现在：Agent 努力解析网页 → 经常被 Shadow DOM 挡住
+WebMCP：网站主动告诉 Agent"我有哪些操作"→ 根本不需要解析结构
+```
+
+但 WebMCP 目前**实际上不可用**：
+- 只在 Chrome Canary（实验构建版）里有预览支持，普通用户不会用它
+- 没有任何生产网站实现了 WebMCP 接口
+- 经典鸡和蛋：Agent 不支持 → 网站没动力实现；网站不实现 → Agent 没动力支持
+
+乐观估计，WebMCP 广泛落地要到 2027 年之后。现在实际能用的还是 Hybrid 路线。
+
+---
+
+## 五、核心玩家图谱
+
+### 微软：隐形的地基提供者
+
+| 产品 | 定位 |
+|------|------|
+| Playwright | 浏览器自动化框架，整个生态的底层基础 |
+| Playwright MCP | Playwright 的 MCP 封装，事实标准 |
+| UFO2 (AgentOS) | Windows 桌面 GUI Agent |
+| OmniParser | 屏幕截图结构化解析工具 |
+
+### Browser-Use：社区之王
+
+Python 库，把任何 LLM 变成完全自主的浏览器 Agent。两位 ETH Zurich 研究生做出来的，4 天 demo 发到 Hacker News，3 个月 50K stars。
+
+- ~79,000+ GitHub Stars，$17M 种子轮（Felicis 领投，Paul Graham 参投），YC W25
+- 自研模型：BU-2.0（匹配 Claude Opus 4.5 但快 40%）→ BU-30B-A3B-Preview（200 任务/$1）
+- **注意**：自报 WebVoyager 89.1%，独立复现只有 60.2%（高估 20-50%）
+
+### BrowserBase + Stagehand：资本之王
+
+**BrowserBase**（基础设施层）：云浏览器平台，"AWS for headless browsers"。
+
+- 估值 $300M，总融资 $67.5M，2025 年处理 5000 万浏览器会话
+- 解决 CAPTCHA 处理、浏览器指纹随机化、代理轮换、会话持久化
+
+**Stagehand**（SDK 层）：~20,000+ stars，给开发者三个原子 AI 原语：
+
+- `act(instruction)` — 执行操作
+- `extract(instruction, schema)` — 提取数据
+- `observe(instruction)` — 观察页面状态
+
+两者关系：Stagehand 是开源飞轮，BrowserBase 是付费基础设施。
+
+### Skyvern：视觉流派代表
+
+- 20,300+ stars，$2.7M 种子轮，$0.05/步
+- 纯视觉路线，不解析 DOM，对页面布局变化天然免疫
+- WebVoyager 85.85%（表单填写场景最强）
+
+### 其他值得关注的玩家
+
+- **Magnitude**：WebVoyager 93.9%（开源 SOTA）
+- **AgentQL**：用自然语言描述要的数据，等于"Web 页面的 SQL"，有官方 MCP server
+- **Vercel agent-browser**：Rust + Node.js 混合架构，声称比 Playwright MCP 节省 82-93% 上下文
+- **Pinchtab**：Go 编写，12MB 单二进制，零依赖，curl 就能调用，适合非 Python/TypeScript 环境
+- **Amazon Nova Act**：前 Adept 团队（~$415M 总融资后被收购），AWS 生态入场
+- **Lightpanda**：Zig 编写，比 Chrome headless 快 11 倍、内存省 9 倍
+
+---
+
+## 六、浏览器之上：MCP 把一切连在一起
+
+MCP（Model Context Protocol）是 Anthropic 2024.11 发布的协议，解决的问题是：AI 怎么标准化地调用外部工具？
+
+**MCP 采纳时间线：**
+
+| 时间 | 事件 |
+|------|------|
+| 2024.11 | Anthropic 发布 MCP |
+| 2025.3 | OpenAI 采纳；Microsoft 发布 Playwright MCP |
+| 2025.4 | Google 确认 Gemini 支持 MCP |
+| 2025.12 | MCP 捐赠给 Linux Foundation |
+| 2026 初 | 全行业广泛采纳，435+ 浏览器相关 MCP server |
+
+**MCP 已经是"USB 接口"了。** OpenAI、Google、Microsoft、Amazon 全部采纳。任何不支持 MCP 的工具正在自我边缘化（MultiOn 没有 MCP server 被单独点名批评）。
+
+---
+
+## 七、GUI Agent——与浏览器 Agent 正交的第五条路
+
+前面四条技术路线有一个共同前提：操作对象是**浏览器**。
+
+GUI Agent 完全不同：
+
+```
+截图 → VLM 推理 → 坐标点击/键盘输入
+```
+
+不解析 DOM，不依赖可访问性树，直接"看"屏幕像素，可以控制任何有视觉界面的系统——不只是浏览器，还有桌面 App、手机 App。
+
+两种范式是**正交关系**，不是前后版本：
+- Browser Agent：结构化信息优势，但被 Shadow DOM 等问题限制
+- GUI Agent：通用性优势，但精度和成本不如结构化路线
+
+### 主要玩家
+
+**UI-TARS（字节跳动）**：迭代最快，27.8K stars，开源。产品化为中兴努比亚"豆包手机"，3,499 元，24 小时售罄 30,000 台。
+
+**Open-AutoGLM（智谱 AI）**：23.9K stars，中文移动 App 任务 89.7%，专为微信、支付宝、美团等超级 App 深度优化。
+
+**MAI-UI（阿里通义）**：MoE 235B-A22B，AndroidWorld 76.7%（当前 #1）。
+
+### 关键洞察：强化学习是 GUI Agent 的关键杠杆
+
+根据 DigiRL（Berkeley）的实验：
+
+```
+SFT 训练：17.7%
+离线 RL：32.4%
+在线 RL（DigiRL）：67.2%
+```
+
+接近 **4 倍提升**。结论：**强化学习（而非更大的模型或更多数据）才是解锁 GUI Agent 能力的关键。**
+
+### Anthropic 收购 Vercept（2026.2.25）
+
+SAM（Segment Anything Model）发明人 Ross Girshick 的团队被 Anthropic 收购——说明 Anthropic 认为视觉感知是计算机操控的关键瓶颈，Claude Computer Use 的演化方向是从 Browser Agent 向 GUI Agent 靠拢。
+
+第四位联创 Matt Deitke 被 Meta 以 $250M/4 年合约挖走。
+
+---
+
+## 八、上游管道——先搜索和提取，再开浏览器
+
+**浏览器是最后手段**，因为它最贵：
+
+| 层次 | 典型工具 | 速度 | 成本/次 |
+|------|----------|------|---------|
+| 搜索 API | Tavily、Exa | 0.01 秒 | &lt;$0.01 |
+| 内容提取 | Firecrawl、Crawl4AI | 1 秒 | ~$0.01 |
+| 浏览器交互 | Stagehand、Browser-Use | 5-60 秒 | $0.05-2.00 |
+
+**成本和时间差距是 100 倍以上。** 聪明的 Agent 设计：能搜索解决的不提取，能提取解决的不开浏览器，只有需要登录或交互时才启动浏览器。
+
+### 搜索层
+
+- **Tavily**：AI-native 搜索 API，总计 $25M → 2026.2 被 Nebius 以 $275-400M 收购
+- **Exa.ai**：神经/语义搜索，$700M 估值（比 BrowserBase $300M 还高——资本认为"帮 Agent 找信息"和"操作浏览器"至少一样值钱）
+- **SearXNG**：自托管元搜索，零成本，适合隐私敏感场景
+
+### 内容提取层
+
+- **Firecrawl**：~82K+ stars，$16M 融资，网页转 LLM-ready Markdown（省 67% token）
+- **Crawl4AI**：~60K+ stars，完全免费
+- **Jina Reader**：URL 前缀极简 API，被 Elastic 收购
+
+---
+
+## 九、基准测试的真相——别被数字骗了
+
+### WebVoyager 的数字有水分
+
+最常被引用的 WebVoyager 基准：643 个任务，跨 15 个真实网站，很多模型宣称 90% 左右的成绩。
+
+但换一个更严格的基准（Online-Mind2Web），分数立刻塌方：
+
+| 模型 | WebVoyager | Online-Mind2Web | 跌幅 |
+|------|------------|-----------------|------|
+| Gemini 2.5 Computer Use | 88.9% | 69.0% | -20pp |
+| OpenAI Operator | 87% | 61% | -26pp |
+
+**~90% 的 WebVoyager 分数，在真实动态网站上崩塌到基线水平。**
+
+### WebArena：更接近真实
+
+812 个任务，自托管的真实网站副本。两年半从 14% 到 72.7%，距人类 78.24% 仅差 5.5pp。进步巨大，但离"可靠"还有距离。
+
+### 真实成本对比
+
+| 方案 | 完成率 | 速度 | 成本 |
+|------|--------|------|------|
+| Stagehand + Claude Sonnet 4.6 | ~75% | — | 中等 |
+| Browser-Use + BU-2.0 | ~83% | ~62 秒/任务 | 低 |
+| 手写 Playwright 脚本 | ~98% | 毫秒级 | 几乎零 |
+
+**底线：AI 浏览器自动化的价值不在于峰值得分，而在于不需要为每个任务单独写脚本。对于稳定页面的高频任务，Playwright 仍然是正确答案。**
+
+### 每步的时间去哪了
+
+一个 AI 浏览器操作步骤的时间分解：
+
+- DOM 提取：100-500ms
+- 截图捕获：200-400ms
+- **LLM 推理：1000-5000ms（瓶颈）**
+- 动作执行：100-1000ms
+- 页面稳定等待：500-3000ms
+
+每步总计 2-10 秒，10 步任务就是 20-100 秒。LLM 推理占了大头，这也是为什么 Browser-Use 要专门训练浏览器专用小模型。
+
+---
+
+## 十、Agentic Browser——浏览器本身变成 Agent
+
+当浏览器内置了 AI，整个上层建筑都可能被重写。
+
+五款 Agentic Browser 已经发布：
+
+- **Chrome Auto Browse**（Google，Gemini 3 驱动，2026.1.28）——分水岭事件。Chrome 是全球占有率最高的浏览器，Pro 版每天 20 个任务，Ultra 版每天 200 个
+- **ChatGPT Atlas**（OpenAI）
+- **Perplexity Comet**（免费）
+- **Opera Neon**（隐私导向）
+- **Dia**（The Browser Company / Atlassian）
+
+---
+
+## 十一、Agent x Web3——事实与愿景的分界线
+
+一个重要认知：**AI Agent 不通过浏览器操作钱包。**
+
+Agent 使用编程式钱包，服务端签名，完全绕过浏览器钱包 UI。Web3 Agent 的交易层和浏览器层是**解耦**的。
+
+已经落地的：
+- **Olas Agents（Gnosis Chain）**：600+ 日活 Agent，820 万+ 链上交易——目前最有说服力的单一证据
+- **x402 协议**：Coinbase + Cloudflare 推动，HTTP 402 + 稳定币结算，实现 AI-to-AI 原生支付
+- **Coinbase Agentic Wallets（2026.2.11）**：首个为 AI Agent 设计的钱包基础设施
+- **ERC-8004**：合约已部署以太坊主网，24,500+ Agent 注册
+
+---
+
+## 十二、安全：Agent 上网的结构性缺陷
+
+安全问题不是边缘情况，是已被多项研究证实的系统性问题：
+
+- Meta FAIR 的 WASP 基准：低成本提示注入攻击，部分成功率高达 **86%**
+- GPT-4o 作为 Agent 时，尝试了 100 个有害行为中的 **98 个**（作为聊天机器人时会拒绝）
+- 评测 16 个主流 LLM Agent，**没有一个安全分数超过 60%**
+- 面对暗黑模式（UI 欺骗设计），Agent 平均 **41%** 的时间会被欺骗
+
+**根本原因：** 同一个 LLM，作为聊天机器人有安全对齐，但被套上浏览器 Agent 外壳后，安全对齐会退化——因为 Agent 的执行上下文与训练时的对话上下文存在分布偏移。
+
+新兴防御方案：ceLLMate（最小权限策略）、AgentBound（MCP 访问控制）、WebSentinel（提示注入检测，准确率 0.991）、Anthropic 多层防御（Claude Opus 4.5 成功注入率降至 1%）。
+
+---
+
+## 十三、决策矩阵：你的场景该用什么
+
+**只需要信息，不需要交互：**
+- 快速搜索 → Tavily / Exa（via MCP），&lt;$0.01/查询
+- 已知 URL 的内容提取 → Firecrawl / Jina Reader
+- 大规模免费爬取 → Crawl4AI
+
+**需要浏览器交互：**
+- 通用 Web 任务 → Browser-Use + BU-2.0（成本低）
+- 企业级稳定性 → BrowserBase + Stagehand
+- 需要真实登录态 → OpenClaw 扩展 Relay 模式（注意其稳定性问题）
+- 需要突破反爬 → Bright Data
+
+**需要控制手机 / 桌面 App：**
+- 中文 Android 应用 → Open-AutoGLM / MAI-UI
+- 跨平台桌面 → UI-TARS-2 / UFO2
+
+---
+
+## 十四、现状总结：六个确定的结论
+
+**1. Hybrid 架构已经赢了。** 资金最多的公司、stars 最多的项目、最大的云厂商——都在走可访问性树 + 选择性视觉的 Hybrid 路线。
+
+**2. MCP 标准化是既成事实。** OpenAI、Google、Microsoft、Amazon 全部采纳，435+ 浏览器 MCP server。不支持 MCP 的工具正在自我边缘化。
+
+**3. 基准测试系统性高估真实能力。** WebVoyager ~90% → Online-Mind2Web 61%，20-30pp 的落差是结构性的，不是个例。
+
+**4. Shadow DOM 是 2026 年可访问性树路线的最大技术挑战。** WebMCP 是根本解法，但现在不可用；Hybrid 是现实解法。
+
+**5. 浏览器专用小模型路线值得关注。** Browser-Use 的 BU-30B-A3B-Preview：200 任务/$1，成本效率已远超通用大模型。
+
+**6. GUI Agent 是正交的第五条路径，RL 是关键杠杆。** DigiRL 证明强化学习能带来接近 4 倍提升，两种范式最终大概率走向 Hybrid 融合。
+
+---
+
+## 附录：关键链接
+
+### OpenClaw
+
+- [官方文档](https://docs.openclaw.ai/tools/browser) | [Chrome 扩展](https://docs.openclaw.ai/tools/chrome-extension)
+- [社区弹性 fork](https://github.com/Unayung/openclaw-browser-relay)
+
+### Agent 框架
+
+- [Browser-Use](https://github.com/browser-use/browser-use) | [Stagehand](https://github.com/browserbase/stagehand) | [Skyvern](https://github.com/Skyvern-AI/skyvern)
+- [Magnitude](https://github.com/magnitudedev/browser-agent) | [Pinchtab](https://github.com/pinchtab/pinchtab)
+
+### 基础设施
+
+- [BrowserBase](https://www.browserbase.com/) | [Steel.dev](https://steel.dev/) | [Browserless](https://www.browserless.io/)
+
+### MCP / 标准
+
+- [Playwright MCP](https://github.com/microsoft/playwright-mcp) | [AgentQL MCP](https://github.com/tinyfish-io/agentql-mcp)
+- [WebMCP (W3C 草案)](https://github.com/webmachinelearning/webmcp)
+
+### GUI Agent
+
+- [UI-TARS](https://github.com/bytedance/UI-TARS) | [Open-AutoGLM](https://github.com/THUDM/AutoGLM)
+- [OmniParser](https://github.com/microsoft/OmniParser) | [UFO2](https://github.com/microsoft/UFO)
+- [DigiRL](https://github.com/DigiRL-agent/digirl)
+
+### 上游管道
+
+- [Tavily](https://tavily.com/) | [Exa.ai](https://exa.ai/) | [Firecrawl](https://github.com/mendableai/firecrawl)
+- [Crawl4AI](https://github.com/unclecode/crawl4ai) | [Jina Reader](https://github.com/jina-ai/reader) | [SearXNG](https://github.com/searxng/searxng)
+
+### Web3
+
+- [x402 协议](https://www.x402.org/) | [Coinbase AgentKit](https://github.com/coinbase/agentkit)
+- [ERC-8004](https://eips.ethereum.org/EIPS/eip-8004) | [Olas](https://olas.network/)
+
+### 基准测试 / Agentic Browsers
+
+- [WebArena](https://webarena.dev/) | [Chrome Auto Browse](https://blog.google/products-and-platforms/products/chrome/gemini-3-auto-browse/)
+- [ChatGPT Atlas](https://openai.com/index/introducing-chatgpt-atlas/) | [Dia Browser](https://www.diabrowser.com)
