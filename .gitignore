@@ -31,3 +31,6 @@ firebase-debug.log
 
 # pipeline caches
 resources/_cache/
+
+# Playwright MCP screenshots
+.playwright-mcp/
