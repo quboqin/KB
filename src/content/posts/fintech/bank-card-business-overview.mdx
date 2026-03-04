@@ -30,21 +30,91 @@ draft: false
 卡组织不计入“四方”本身，但负责连接收单机构和发卡机构，并提供网络与规则体系。
 
 ```mermaid
-sequenceDiagram
-    participant C as 持卡人
-    participant M as 商户
-    participant A as 收单机构
-    participant N as 卡组织
-    participant I as 发卡机构
+flowchart LR
+    %% 统一视觉样式
+    classDef actor fill:white,stroke:white,color:black,font-weight:bold;
+    classDef bank fill:white,stroke:white,color:black,font-weight:bold;
+    classDef centerNode fill:white,stroke:#94a3b8,stroke-width:3px,color:black,stroke-dasharray: 10 6;
 
-    C->>M: 1 使用银行卡支付
-    M->>A: 2 发送银行卡信息和金额，进行交易授权
-    A->>N: 3 转交至卡组织安排交易授权
-    N->>I: 4 转交至发卡机构进行交易授权
-    I-->>N: 5 确认或拒绝交易授权
-    N-->>A: 6 转送交易授权信息
-    A-->>M: 7 通知商户交易授权信息
-    M-->>C: 8 完成交易
+    %% 主体节点
+    User("<div style='text-align:center;width:170px;'>
+      <img src='/assets/mermaid-icons/cardholder.svg' width='120' />
+      <div style='margin-top:8px;font-size:22px;font-weight:700;'>持卡人</div>
+    </div>")
+    Merchant("<div style='text-align:center;width:170px;'>
+      <img src='/assets/mermaid-icons/merchant.svg' width='130' />
+      <div style='margin-top:8px;font-size:22px;font-weight:700;'>商户</div>
+    </div>")
+    Acquirer("<div style='text-align:center;width:170px;'>
+      <img src='/assets/mermaid-icons/bank.svg' width='112' />
+      <div style='margin-top:8px;font-size:22px;font-weight:700;'>收单机构</div>
+    </div>")
+    Network("<div style='text-align:center;width:250px;padding:8px 6px;'>
+      <img src='/assets/mermaid-icons/network.svg' width='168' />
+      <div style='font-size:16px;line-height:1.7;text-align:left;display:inline-block;margin-top:8px;'>
+        <div><b>负责内容：</b></div>
+        <div>1&nbsp;&nbsp;连接收单机构和发卡机构</div>
+        <div>2&nbsp;&nbsp;提供网络与规则体系</div>
+      </div>
+    </div>")
+    Issuer("<div style='text-align:center;width:170px;'>
+      <img src='/assets/mermaid-icons/bank.svg' width='112' />
+      <div style='margin-top:8px;font-size:22px;font-weight:700;'>发卡机构</div>
+    </div>")
+
+    %% 隐形连线控制布局
+    User ~~~ Issuer
+    Merchant ~~~ Acquirer
+
+    %% 交易链路
+    User -- "<div style='display:flex;align-items:center;gap:10px;'>
+      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>1</span>
+      <span style='font-size:18px;font-weight:600;'>使用银行卡支付</span>
+    </div>" --> Merchant
+    Merchant -- "<div style='display:flex;align-items:center;gap:10px;'>
+      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>8</span>
+      <span style='font-size:18px;font-weight:600;'>完成交易</span>
+    </div>" --> User
+
+    Merchant -- "<div style='display:flex;align-items:center;gap:10px;'>
+      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>2</span>
+      <span style='font-size:18px;font-weight:600;'>发送银行卡信息和金额<br/>进行交易授权</span>
+    </div>" --> Acquirer
+    Acquirer -- "<div style='display:flex;align-items:center;gap:10px;'>
+      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>7</span>
+      <span style='font-size:18px;font-weight:600;'>通知持卡人交易<br/>授权信息</span>
+    </div>" --> Merchant
+
+    Acquirer -- "<div style='display:flex;align-items:center;gap:10px;'>
+      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>3</span>
+      <span style='font-size:18px;font-weight:600;'>转交至卡组织<br/>安排交易授权</span>
+    </div>" --> Network
+    Network -- "<div style='display:flex;align-items:center;gap:10px;'>
+      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>6</span>
+      <span style='font-size:18px;font-weight:600;'>转送交易授权信息</span>
+    </div>" --> Acquirer
+
+    Network -- "<div style='display:flex;align-items:center;gap:10px;'>
+      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>4</span>
+      <span style='font-size:18px;font-weight:600;'>转交至发卡机构<br/>进行交易授权</span>
+    </div>" --> Issuer
+    Issuer -- "<div style='display:flex;align-items:center;gap:10px;'>
+      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>5</span>
+      <span style='font-size:18px;font-weight:600;'>确认或拒绝交易授权</span>
+    </div>" --> Network
+
+    class User,Merchant actor;
+    class Acquirer,Issuer bank;
+    class Network centerNode;
+
+    linkStyle 2 stroke:#ea7a2f,stroke-width:4px;
+    linkStyle 3 stroke:#ea7a2f,stroke-width:4px;
+    linkStyle 4 stroke:#ea7a2f,stroke-width:4px;
+    linkStyle 5 stroke:#ea7a2f,stroke-width:4px;
+    linkStyle 6 stroke:#ea7a2f,stroke-width:4px;
+    linkStyle 7 stroke:#ea7a2f,stroke-width:4px;
+    linkStyle 8 stroke:#ea7a2f,stroke-width:4px;
+    linkStyle 9 stroke:#ea7a2f,stroke-width:4px;
 ```
 
 原始图：
@@ -62,18 +132,69 @@ sequenceDiagram
 因此交易链路比四方模式更短。
 
 ```mermaid
-sequenceDiagram
-    participant C as 持卡人
-    participant M as 商户
-    participant N as 卡组织
+flowchart TB
+    %% 全局样式
+    classDef actor fill:white,stroke:white,color:black,font-weight:bold;
+    classDef org fill:white,stroke:white,color:black,font-weight:bold;
+    classDef ghost fill:transparent,stroke:transparent,color:transparent;
 
-    Note over N: 同时承担卡组织、发卡机构、收单机构角色
+    %% 顶部卡组织
+    Network("<div style='text-align:center;width:260px;'>
+      <img src='/assets/mermaid-icons/network-three-party.svg' width='230' />
+    </div>")
 
-    C->>M: 1 使用银行卡支付
-    M->>N: 2 发送银行卡信息和金额，进行交易授权
-    N-->>M: 3 确认或拒绝交易授权
-    M-->>C: 4 通知交易授权信息
-    C-->>M: 5 完成交易
+    %% 底部左右布局
+    subgraph BottomRow[ ]
+      direction LR
+      Cardholder("<div style='text-align:center;width:170px;'>
+        <img src='/assets/mermaid-icons/cardholder.svg' width='116' />
+        <div style='margin-top:8px;font-size:22px;font-weight:700;'>持卡人</div>
+      </div>")
+      Gap[" "]
+      Merchant("<div style='text-align:center;width:170px;'>
+        <img src='/assets/mermaid-icons/merchant.svg' width='128' />
+        <div style='margin-top:8px;font-size:22px;font-weight:700;'>商户</div>
+      </div>")
+    end
+
+    Network --- Gap
+
+    %% 交易链路
+    Cardholder -- "<div style='display:flex;align-items:center;gap:10px;'>
+      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>1</span>
+      <span style='font-size:18px;font-weight:600;'>使用银行卡支付</span>
+    </div>" --> Merchant
+
+    Merchant -- "<div style='display:flex;align-items:center;gap:10px;'>
+      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>2</span>
+      <span style='font-size:18px;font-weight:600;'>发送银行卡信息<br/>和金额，进行交易授权</span>
+    </div>" --> Network
+
+    Network -- "<div style='display:flex;align-items:center;gap:10px;'>
+      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>3</span>
+      <span style='font-size:18px;font-weight:600;'>确认或拒绝<br/>交易授权</span>
+    </div>" --> Merchant
+
+    Merchant -- "<div style='display:flex;align-items:center;gap:10px;'>
+      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>4</span>
+      <span style='font-size:18px;font-weight:600;'>通知商户交易<br/>授权信息</span>
+    </div>" --> Cardholder
+
+    Merchant -- "<div style='display:flex;align-items:center;gap:10px;'>
+      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>5</span>
+      <span style='font-size:18px;font-weight:600;'>完成交易</span>
+    </div>" --> Cardholder
+
+    class Cardholder,Merchant actor;
+    class Network org;
+    class Gap ghost;
+
+    linkStyle 0 stroke:transparent;
+    linkStyle 1 stroke:#ea7a2f,stroke-width:4px;
+    linkStyle 2 stroke:#ea7a2f,stroke-width:4px;
+    linkStyle 3 stroke:#ea7a2f,stroke-width:4px;
+    linkStyle 4 stroke:#ea7a2f,stroke-width:4px;
+    linkStyle 5 stroke:#ea7a2f,stroke-width:4px;
 ```
 
 原始图：

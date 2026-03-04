@@ -17,6 +17,11 @@ const { title, description = 'KB with AI — A knowledge blog powered by AI', im
 <html lang="zh-CN" class="scroll-smooth">
   <head>
     <BaseHead title={title} description={description} image={image} />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      referrerpolicy="no-referrer"
+    />
     <script is:inline>
       // Run before paint to prevent flash of wrong theme
       const stored = localStorage.getItem('theme');

@@ -1,0 +1,16 @@
+<svg width="240" height="220" viewBox="0 0 240 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="120" cy="110" r="96" fill="#F8FAFC" stroke="#64748B" stroke-width="4"/>
+  <rect x="85" y="42" width="70" height="32" rx="6" fill="#2563EB"/>
+  <text x="120" y="63" text-anchor="middle" font-size="18" font-weight="700" fill="white" font-family="Arial, sans-serif">AMEX</text>
+  <circle cx="82" cy="108" r="22" stroke="#0284C7" stroke-width="8"/>
+  <path d="M82 88V128" stroke="#0284C7" stroke-width="8" stroke-linecap="round"/>
+  <g>
+    <rect x="129" y="82" width="20" height="44" rx="4" fill="#1D4ED8"/>
+    <rect x="147" y="82" width="20" height="44" rx="4" fill="#DC2626"/>
+    <rect x="165" y="82" width="20" height="44" rx="4" fill="#16A34A"/>
+    <text x="139" y="110" text-anchor="middle" font-size="16" font-weight="700" fill="white" font-family="Arial, sans-serif">J</text>
+    <text x="157" y="110" text-anchor="middle" font-size="16" font-weight="700" fill="white" font-family="Arial, sans-serif">C</text>
+    <text x="175" y="110" text-anchor="middle" font-size="16" font-weight="700" fill="white" font-family="Arial, sans-serif">B</text>
+  </g>
+  <text x="120" y="156" text-anchor="middle" font-size="22" font-weight="700" fill="#0F172A" font-family="Arial, sans-serif">卡组织</text>
+</svg>

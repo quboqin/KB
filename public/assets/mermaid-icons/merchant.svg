@@ -1,0 +1,16 @@
+<svg width="240" height="220" viewBox="0 0 240 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="121" cy="202" rx="86" ry="10" fill="#CBD5E1"/>
+  <rect x="58" y="88" width="126" height="95" rx="6" fill="#F8FAFC" stroke="#9CA3AF" stroke-width="4"/>
+  <rect x="70" y="114" width="44" height="54" fill="#7DD3FC" stroke="#0EA5E9" stroke-width="4"/>
+  <rect x="133" y="111" width="34" height="57" fill="#7DD3FC" stroke="#0284C7" stroke-width="4"/>
+  <rect x="51" y="76" width="140" height="20" rx="6" fill="#B91C1C"/>
+  <path d="M48 75H194L177 104C174 110 168 114 161 114H81C74 114 68 110 65 104L48 75Z" fill="#DC2626"/>
+  <path d="M58 75H78L71 112H56C49 112 43 106 43 99C43 96 44 92 46 90L58 75Z" fill="#B91C1C"/>
+  <path d="M78 75H99L95 112H71L78 75Z" fill="#F8FAFC"/>
+  <path d="M99 75H121V112H95L99 75Z" fill="#DC2626"/>
+  <path d="M121 75H143L147 112H121V75Z" fill="#F8FAFC"/>
+  <path d="M143 75H164L171 112H147L143 75Z" fill="#DC2626"/>
+  <path d="M164 75H184L196 90C198 92 199 96 199 99C199 106 193 112 186 112H171L164 75Z" fill="#F8FAFC"/>
+  <rect x="84" y="60" width="77" height="22" rx="6" fill="#BE123C"/>
+  <text x="122.5" y="76" text-anchor="middle" font-size="22" font-weight="700" fill="white" font-family="Arial, sans-serif">SHOP</text>
+</svg>
