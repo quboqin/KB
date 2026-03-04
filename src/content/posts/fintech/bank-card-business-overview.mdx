@@ -240,6 +240,76 @@ flowchart TB
 - 卡组织获得 0.3 元网络费
 - 商户扣减手续费后净收入约 97 元
 
+```mermaid
+flowchart TB
+    %% 全局样式
+    classDef actor fill:white,stroke:white,color:black,font-weight:bold;
+    classDef bank fill:white,stroke:white,color:black,font-weight:bold;
+    classDef network fill:white,stroke:#94a3b8,stroke-width:3px,color:black,stroke-dasharray: 10 6;
+    classDef note fill:#f8fafc,stroke:#cbd5e1,stroke-width:2px,color:#0f172a;
+    classDef assumption fill:#dcfce7,stroke:#86efac,stroke-width:2px,color:#14532d;
+    classDef ghost fill:transparent,stroke:transparent,color:transparent;
+
+    subgraph TopRow[ ]
+      direction LR
+      Issuer("<div style='text-align:center;width:170px;'>
+        <img src='/assets/mermaid-icons/bank.svg' width='120' />
+        <div style='margin-top:8px;font-size:22px;font-weight:700;'>发卡机构</div>
+      </div>")
+      Network("<div style='text-align:center;width:230px;padding:8px 6px;'>
+        <img src='/assets/mermaid-icons/network.svg' width='160' />
+        <div style='margin-top:8px;font-size:22px;font-weight:700;'>卡组织</div>
+      </div>")
+      Acquirer("<div style='text-align:center;width:170px;'>
+        <img src='/assets/mermaid-icons/bank.svg' width='120' />
+        <div style='margin-top:8px;font-size:22px;font-weight:700;'>收单机构</div>
+      </div>")
+    end
+
+    subgraph BottomRow[ ]
+      direction LR
+      Cardholder("<div style='text-align:center;width:170px;'>
+        <img src='/assets/mermaid-icons/cardholder.svg' width='118' />
+        <div style='margin-top:8px;font-size:22px;font-weight:700;'>持卡人</div>
+      </div>")
+      Txn["<div style='text-align:center;padding:10px 14px;font-size:18px;font-weight:700;'>100 元信用卡交易</div>"]
+      Merchant("<div style='text-align:center;width:170px;'>
+        <img src='/assets/mermaid-icons/merchant.svg' width='128' />
+        <div style='margin-top:8px;font-size:22px;font-weight:700;'>商户</div>
+      </div>")
+    end
+
+    Assumption["<div style='text-align:left;padding:6px 8px;line-height:1.6;'>
+      <div><b>假设</b></div>
+      <div>1) 交换费：交易金额 x 1.8%</div>
+      <div>2) 网络费：交易金额 x 0.3%</div>
+      <div>3) 处理费：交易金额 x 0.9%</div>
+    </div>"]
+
+    TopRow --- BottomRow
+    BottomRow --- Assumption
+
+    Cardholder -- "收到帐单后<br/>缴付 100 元" --> Issuer
+    Issuer -- "交易结算时<br/>先垫付 100 元<br/>收取交换费 1.8 元" --> Network
+    Network -- "交易结算时<br/>转账交换费 1.8 元<br/>给发卡机构" --> Issuer
+    Network -- "交易结算时<br/>转账处理费 0.9 元<br/>给收单机构<br/>收取网络费 0.3 元" --> Acquirer
+    Acquirer -- "交易结算时<br/>收取处理费 0.9 元<br/>转账 97 元给商户" --> Merchant
+    Merchant -- "持卡人消费 100 元<br/>商户完成销售" --> Cardholder
+
+    class Cardholder,Merchant actor;
+    class Issuer,Acquirer bank;
+    class Network network;
+    class Txn note;
+    class Assumption assumption;
+
+    linkStyle 2 stroke:#ea7a2f,stroke-width:4px;
+    linkStyle 3 stroke:#ea7a2f,stroke-width:4px;
+    linkStyle 4 stroke:#ea7a2f,stroke-width:4px;
+    linkStyle 5 stroke:#ea7a2f,stroke-width:4px;
+    linkStyle 6 stroke:#ea7a2f,stroke-width:4px;
+    linkStyle 7 stroke:#ea7a2f,stroke-width:4px;
+```
+
 原始图：
 
 ![](./assets/bank-card-business-overview/original-revenue-2.png)
