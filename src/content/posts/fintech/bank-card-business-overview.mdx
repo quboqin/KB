@@ -67,41 +67,17 @@ flowchart LR
     Merchant ~~~ Acquirer
 
     %% 交易链路
-    User -- "<div style='display:flex;align-items:center;gap:10px;'>
-      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>1</span>
-      <span style='font-size:18px;font-weight:600;'>使用银行卡支付</span>
-    </div>" --> Merchant
-    Merchant -- "<div style='display:flex;align-items:center;gap:10px;'>
-      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>8</span>
-      <span style='font-size:18px;font-weight:600;'>完成交易</span>
-    </div>" --> User
+    User -- "1 使用银行卡支付" --> Merchant
+    Merchant -- "8 完成交易" --> User
 
-    Merchant -- "<div style='display:flex;align-items:center;gap:10px;'>
-      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>2</span>
-      <span style='font-size:18px;font-weight:600;'>发送银行卡信息和金额<br/>进行交易授权</span>
-    </div>" --> Acquirer
-    Acquirer -- "<div style='display:flex;align-items:center;gap:10px;'>
-      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>7</span>
-      <span style='font-size:18px;font-weight:600;'>通知持卡人交易<br/>授权信息</span>
-    </div>" --> Merchant
+    Merchant -- "2 发送银行卡信息和金额<br/>进行交易授权" --> Acquirer
+    Acquirer -- "7 通知商户交易<br/>授权信息" --> Merchant
 
-    Acquirer -- "<div style='display:flex;align-items:center;gap:10px;'>
-      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>3</span>
-      <span style='font-size:18px;font-weight:600;'>转交至卡组织<br/>安排交易授权</span>
-    </div>" --> Network
-    Network -- "<div style='display:flex;align-items:center;gap:10px;'>
-      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>6</span>
-      <span style='font-size:18px;font-weight:600;'>转送交易授权信息</span>
-    </div>" --> Acquirer
+    Acquirer -- "3 转交至卡组织<br/>安排交易授权" --> Network
+    Network -- "6 转送交易授权信息" --> Acquirer
 
-    Network -- "<div style='display:flex;align-items:center;gap:10px;'>
-      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>4</span>
-      <span style='font-size:18px;font-weight:600;'>转交至发卡机构<br/>进行交易授权</span>
-    </div>" --> Issuer
-    Issuer -- "<div style='display:flex;align-items:center;gap:10px;'>
-      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>5</span>
-      <span style='font-size:18px;font-weight:600;'>确认或拒绝交易授权</span>
-    </div>" --> Network
+    Network -- "4 转交至发卡机构<br/>进行交易授权" --> Issuer
+    Issuer -- "5 确认或拒绝交易授权" --> Network
 
     class User,Merchant actor;
     class Acquirer,Issuer bank;
@@ -160,30 +136,15 @@ flowchart TB
     Network --- Gap
 
     %% 交易链路
-    Cardholder -- "<div style='display:flex;align-items:center;gap:10px;'>
-      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>1</span>
-      <span style='font-size:18px;font-weight:600;'>使用银行卡支付</span>
-    </div>" --> Merchant
+    Cardholder -- "1 使用银行卡支付" --> Merchant
 
-    Merchant -- "<div style='display:flex;align-items:center;gap:10px;'>
-      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>2</span>
-      <span style='font-size:18px;font-weight:600;'>发送银行卡信息<br/>和金额，进行交易授权</span>
-    </div>" --> Network
+    Merchant -- "2 发送银行卡信息<br/>和金额，进行交易授权" --> Network
 
-    Network -- "<div style='display:flex;align-items:center;gap:10px;'>
-      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>3</span>
-      <span style='font-size:18px;font-weight:600;'>确认或拒绝<br/>交易授权</span>
-    </div>" --> Merchant
+    Network -- "3 确认或拒绝<br/>交易授权" --> Merchant
 
-    Merchant -- "<div style='display:flex;align-items:center;gap:10px;'>
-      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>4</span>
-      <span style='font-size:18px;font-weight:600;'>通知商户交易<br/>授权信息</span>
-    </div>" --> Cardholder
+    Merchant -- "4 通知持卡人交易<br/>授权信息" --> Cardholder
 
-    Merchant -- "<div style='display:flex;align-items:center;gap:10px;'>
-      <span style='display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#ea7a2f;color:white;font-weight:700;'>5</span>
-      <span style='font-size:18px;font-weight:600;'>完成交易</span>
-    </div>" --> Cardholder
+    Merchant -- "5 完成交易" --> Cardholder
 
     class Cardholder,Merchant actor;
     class Network org;

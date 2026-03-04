@@ -89,8 +89,16 @@ Do not start with styling. First make the structure stable.
 After layout is acceptable:
 - use `classDef` for node families
 - use `linkStyle` for line color and thickness
-- use inline HTML spans for numbered orange circles
+- prefer plain-text edge labels such as `1 使用银行卡支付` or `3 确认或拒绝<br/>交易授权` so numbers reliably appear on the line
+- use inline HTML edge labels only when the renderer has already proven stable with `foreignObject` content on links
 - use dashed borders only on nodes that need to read as a conceptual system, not a real actor
+
+For line text and step numbers:
+- default to plain text for labels on lines
+- keep the step number at the start of the label
+- use `<br/>` only for line breaks, not complex layout
+- treat HTML circles, flex rows, or badge-like link labels as high-risk enhancements
+- if numbers disappear from lines, revert to plain-text labels first
 
 ### 8) Debug systematically when the result looks wrong
 

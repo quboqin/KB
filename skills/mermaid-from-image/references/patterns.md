@@ -60,7 +60,19 @@ flowchart LR
 
 Use this instead of emoji or icon fonts when visual stability matters.
 
-## Pattern 4: Numbered edge label
+## Pattern 4: Stable numbered edge label
+
+```mermaid
+flowchart LR
+    A -- "1 发送请求" --> B
+    B -- "2 确认或拒绝<br/>交易授权" --> A
+```
+
+Use this as the default. Keep the text short. Long edge labels distort spacing.
+
+## Pattern 5: High-risk HTML edge label
+
+Use this only if the renderer has already shown that rich HTML on links renders reliably.
 
 ```mermaid
 flowchart LR
@@ -70,9 +82,12 @@ flowchart LR
     </div>" --> B
 ```
 
-Keep the text short. Long edge labels distort spacing.
+Failure mode:
+- some Mermaid renderers show the text but drop the badge
+- some renderers drop the whole rich label on the line
+- debugging is slower than falling back to plain text
 
-## Pattern 5: Concept node with fixed content baked into SVG
+## Pattern 6: Concept node with fixed content baked into SVG
 
 If a node contains logos, a title, and several lines of explanatory text, create one SVG that already contains the full composition and embed it as a single image.
 
@@ -80,7 +95,7 @@ Reason:
 - Mermaid respects the HTML box size but does not give fine-grained control over internal composition.
 - Baking the internal composition into SVG keeps the outer graph editable while fixing the inner artwork.
 
-## Pattern 6: Transparent spacer node
+## Pattern 7: Transparent spacer node
 
 ```mermaid
 flowchart TB
@@ -130,3 +145,14 @@ Fixes:
 - switch to `flowchart TB`
 - use a bottom `subgraph` with `direction LR`
 - connect the top node to a spacer node, not directly to both bottom nodes
+
+### Numbers or labels do not appear on the line
+
+Likely causes:
+- using rich HTML in the edge label
+- the renderer handles node HTML but not link HTML consistently
+
+Fixes:
+- switch the edge label to plain text first
+- keep the number at the beginning of the label
+- only keep `<br/>` if the label truly needs two lines
