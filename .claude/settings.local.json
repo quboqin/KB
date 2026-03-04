@@ -28,7 +28,12 @@
       "mcp__plugin_playwright_playwright__browser_run_code",
       "mcp__plugin_playwright_playwright__browser_network_requests",
       "Bash(curl:*)",
-      "Skill(bobsak:commit)"
+      "Skill(bobsak:commit)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(claude skill:*)",
+      "Bash(CLAUDECODE= claude skill:*)",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "WebFetch(domain:pbs.twimg.com)"
     ]
   }
 }
