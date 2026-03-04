@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mermaid From Image"
+  short_description: "Recreate diagrams from images in Mermaid."
+  default_prompt: "Use this skill when recreating or approximating a diagram from an image or screenshot in Mermaid."
