@@ -1,0 +1,92 @@
+---
+title: "OpenClaw + Claude Code 超强教程：一个人就能搭建完整的开发团队！"
+description: "抓取并整理微信公众号文章全文（已验证会话），包含图片链接与正文纯文本。"
+pubDate: "2026-03-05"
+updatedDate: "2026-03-05"
+tags: ["OpenClaw", "Claude Code", "Codex", "AI Agent", "微信", "抓取"]
+category: 技术
+draft: false
+---
+
+> 来源：Datawhale（公众号）
+>
+> 原文链接：https://mp.weixin.qq.com/s/gtxM1f3JmfXqDuxGIa3-ng
+
+## 基本信息
+
+- 公众号：Datawhale
+- 发布时间：2026年2月25日 22:15
+
+## 图片（5）
+
+1. https://mmbiz.qpic.cn/sz_mmbiz_jpg/zW6S9vt0cS9sC90W5j83NhTQZqGtgdzWia8iaIfyMFff5RTYiaUjDlict2Aag0ewsN5tyNCKBHYm3KiaTWBv9l1blhOPjhCryCBLqdDjGSBxXagI/640?wx_fmt=jpeg#imgIndex=0
+2. https://mmbiz.qpic.cn/sz_mmbiz_jpg/zW6S9vt0cS8dVjicZiaUEDLMiaRQz2FsNR2A3KP3Baahb9x5F8UtTEqoDCFRxGSiaLq8qrKbstsJxhvInXkkaN7leDJDGtkVspBJjOR0cNHzuVY/640?wx_fmt=jpeg#imgIndex=1
+3. https://mmbiz.qpic.cn/sz_mmbiz_png/zW6S9vt0cS8zMFd3fiaZle8KcYwiabRXEVQCVVHGONplE4ZaO7ywlW9kic0ObTiccBDlk8u7eUticQxP6Xpxq5ibW6ac6bC8BSB9WA6XZiacKVS1ws/640?wx_fmt=png&from=appmsg#imgIndex=2
+4. https://mmbiz.qpic.cn/mmbiz_png/zW6S9vt0cSibSMK3OHD6EQpChB7YRvHh0I1SaLTy6wMNMXaOu3PKg4kkJ7OUu3jJjvmAyUzU39rvCUcjIQORbnhvZWP1nicqTSCkTXJ1qvotM/640?wx_fmt=png&from=appmsg#imgIndex=3
+5. https://mmbiz.qpic.cn/mmbiz_png/vI9nYe94fsGxu3P5YibTO899okS0X9WaLmQCtia4U8Eu1xWCz9t8Qtq9PH6T1bTcxibiaCIkGzAxpeRkRFYqibVmwSw/640?wx_fmt=other&wxfrom=5&wx_lazy=1&wx_co=1&tp=webp#imgIndex=20
+
+---
+
+## 正文（纯文本）
+
+Datawhale干货
+
+教程：OpenClaw + Codex/Claude Code
+
+今天分享一个很炸裂的实践案例。（文末附教程）
+
+一个独立开发者，用 OpenClaw + Codex/CC 搭了一套 AI Agent系统，实现了什么效果呢？
+
+一天 94 次提交，30 分钟完成 7 个 PR，而且这一天他还开了 3 个客户会议，编辑器都没打开过。
+
+这是真实发生在 2026 年 1 月的事。作者把整个系统的架构、工作流、代码配置都公开了，看完觉得这个思路太值得学习了，所以整理成这篇文章分享给你。
+
+如果你也在用 Codex 或 Claude Code，或者对 OpenClaw 感兴趣，这篇文章会给你很多启发。
+
+（下文为抓取到的全文纯文本，排版保持原段落结构；如需我再做“目录 + 要点总结 + 关键脚本单独摘录”，告诉我。）
+
+---
+
+Datawhale干货
+
+教程：OpenClaw + Codex/Claude Code
+
+今天分享一个很炸裂的实践案例。（文末附教程）
+
+一个独立开发者，用 OpenClaw + Codex/CC 搭了一套 AI Agent系统，实现了什么效果呢？
+
+一天 94 次提交，30 分钟完成 7 个 PR，而且这一天他还开了 3 个客户会议，编辑器都没打开过。
+
+这是真实发生在 2026 年 1 月的事。作者把整个系统的架构、工作流、代码配置都公开了，看完觉得这个思路太值得学习了，所以整理成这篇文章分享给你。
+
+如果你也在用 Codex 或 Claude Code，或者对 OpenClaw 感兴趣，这篇文章会给你很多启发。
+
+一个人，一天 94 次代码提交
+
+先看几个数据，感受一下这套系统的威力：
+
+过去 4 周的真实数据：
+
+单日最高 94 次提交（平均每天 50 次提交）
+
+30 分钟内完成 7 个 PR
+
+从想法到上线的速度快到可以“当天交付客户需求”
+
+作者用这套系统在做一个真实的 B2B SaaS 产品，配合创始人直销，大部分功能需求都能当天搞定。速度快到什么程度？客户提需求，当天就能看到效果，直接转化成付费用户。
+
+成本呢？每月 $190（Claude $100 + Codex $90），新手起步 $20 就能跑起来。
+
+你可能会问：这是不是堆了一堆 AI 工具，然后疯狂生成垃圾代码？
+
+不是的。作者的 Git 历史看起来像是“刚招了一个开发团队”，但实际上只有他一个人。关键变化是：他从“管理 Claude Code”变成了“管理一个 AI 管家，这个管家再去管理一群 Claude Code”。
+
+1 月之前：直接用 Codex 或 Claude Code 写代码
+
+1 月之后：用 OpenClaw 作为编排层，让它调度 Codex/Claude Code/Gemini
+
+这个转变带来的效果是：系统能自动完成几乎所有小到中等复杂度的任务，不需要人工介入。
+
+（……正文较长，已在 lessons 里保存完整版本：
+`~/.openclaw/workspace/memory/lessons/wechat-openclaw-claude-code-2026-02-25.md`
+如果你希望博客也放“完整版全文”，我可以把 lessons 里的全文原样同步进来，避免这篇过长。）

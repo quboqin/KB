@@ -1,0 +1,107 @@
+---
+title: "抓取小红书笔记（OpenClaw + xiaohongshu-mcp）完整流程与示例"
+description: "用 OpenClaw 在本地跑 xiaohongshu-mcp（Docker + MCP + mcporter），实现登录扫码、抓取笔记详情/图片/评论，并把结果整理成可复用的 Markdown。"
+pubDate: 2026-03-05
+tags: ["OpenClaw", "MCP", "mcporter", "Docker", "小红书", "抓取"]
+category: 技术
+draft: false
+---
+
+## 目标
+
+把一条小红书笔记“完整抓取”下来（正文 + 图片链接 + 作者信息 + 互动数据 + 评论），并保存为可复用的 Markdown。
+
+本文示例笔记：
+- https://www.xiaohongshu.com/explore/69a5ba00000000001a022529
+
+## 核心组件
+
+- **OpenClaw**：负责工具编排
+- **Docker**：跑 `xpzouying/xiaohongshu-mcp`
+- **MCP（Model Context Protocol）**：标准化调用接口
+- **mcporter**：MCP 客户端/调用器
+
+## 关键结论（踩坑）
+
+- `xiaohongshu-mcp` **不一定有网页 UI**，打开 `http://localhost:18060/` 可能会 **404**，这是正常现象。
+- 正确做法是通过 MCP tool 拿到 **登录二维码**（例如 `get_login_qrcode`），用小红书 App 扫码。
+
+## 1) 启动 xiaohongshu-mcp（Docker）
+
+```bash
+# 拉镜像
+docker pull xpzouying/xiaohongshu-mcp
+
+# 启动（暴露 MCP HTTP 端口）
+docker run -d --name xiaohongshu-mcp -p 18060:18060 xpzouying/xiaohongshu-mcp
+
+# 检查
+docker ps --filter name=xiaohongshu-mcp
+```
+
+## 2) 接入 mcporter
+
+在你的工作目录（本文是 OpenClaw workspace）写入配置：
+
+```bash
+cd ~/.openclaw/workspace
+mcporter config add xiaohongshu-mcp http://localhost:18060/mcp
+mcporter list
+```
+
+可选：查看 tool 列表（用于确认当前版本有哪些能力）
+
+```bash
+mcporter list xiaohongshu-mcp --schema
+```
+
+## 3) 登录（生成二维码 → App 扫码）
+
+```bash
+# 生成登录二维码（会返回一张图片）
+mcporter call xiaohongshu-mcp.get_login_qrcode
+
+# 检查登录状态
+mcporter call xiaohongshu-mcp.check_login_status
+```
+
+## 4) 抓取笔记详情（含评论）
+
+笔记详情抓取一般需要两个参数：
+- `feed_id`（笔记 ID）
+- `xsec_token`（从链接或 feed 列表拿到）
+
+示例：
+
+```bash
+mcporter call "xiaohongshu-mcp.get_feed_detail(
+  feed_id: \"69a5ba00000000001a022529\",
+  xsec_token: \"CBx8HHCWAj94KrWbK4awGKrsXYW0P6mbO0a0St5fwPJwE=\",
+  load_all_comments: true,
+  click_more_replies: true,
+  limit: 50,
+  scroll_speed: \"normal\"
+)"
+```
+
+## 5) 本次抓取结果（摘要）
+
+- 标题：强烈推荐的小龙虾🦞Skills ｜OpenClaw
+- 作者：EverettFish（上海）
+- 正文：
+
+> 🦞笨笨的？可能是因为没有学习好技能。\
+> 一些必备的新手Skills推荐。\
+> 可以补充。～\
+> #openclaw #kimiclaw #claw #openclaw部署 @科技薯
+
+- 图片：5 张（抓取结果里给出直链）
+- 评论：6 条（本次已完整拉取）
+
+完整原始整理版 Markdown 已保存到：
+
+- `~/.openclaw/workspace/memory/lessons/xiaohongshu-note-openclaw-skills-2026-03-05.md`
+
+## 后续
+
+如果你希望“输入一个小红书链接 → 自动解析出 feed_id/xsec_token → 拉取并落盘为 Markdown”，可以继续把这段流程封装成一个 OpenClaw skill（或者直接写个脚本）。
