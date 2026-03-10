@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { 
-  Globe, Router, Server, HardDrive, Monitor, Smartphone, 
-  Tv, Clock, Laptop, Box, Cpu, Camera, Plug, Wind, 
+import {
+  Globe, Router, Server, HardDrive, Monitor, Smartphone,
+  Tv, Clock, Laptop, Box, Cpu, Camera, Plug, Wind,
   Wifi, Square, Thermometer, Volume2, Grid as GridIcon, ShieldCheck,
-  Activity, Zap, Network, Sparkles, X, Bot, AlertTriangle, Link2, Camera as CameraIcon
+  Activity, Zap, Network, Sparkles, X, Bot, AlertTriangle, Link2, Camera as CameraIcon,
+  ExternalLink, Cable, Radio
 } from 'lucide-react';
 
 // --- 自定义龙虾图标组件 ---
@@ -18,42 +19,140 @@ const LobsterIcon = ({ size = 24, className = "" }) => (
   </span>
 );
 
-// --- 基于 MD 文件的详细设备数据模型 ---
+// --- 基于 MD 文件的详细设备数据模型 (V2: 含端口/网关/IP类型/Web链接/无线频段/物理参数) ---
 const devices = {
   core: [
-    { id: 'modem', name: '电信光猫', ip: '192.168.1.1', desc: '桥接模式 | 旁路由 NAT 映射', badge: '🔌 LAN 管理互通', icon: Globe, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-    { id: 'main-router', name: '小米主路由', ip: '192.168.123.6', desc: 'PPPoE 拨号 | DHCP 关闭', icon: Router, color: 'text-indigo-400', bg: 'bg-indigo-500/10', glow: true },
-    { id: 'bypass', name: '旁路由 (Passwall)', ip: '192.168.123.99', mac: 'CE:9F:AD:**:**:**', desc: '网关 & DHCP 服务', icon: ShieldCheck, color: 'text-rose-400', bg: 'bg-rose-500/10' },
-    { id: 'mesh', name: '小米 Mesh 节点', ip: '192.168.123.143', mac: '88:C3:97:**:**:**', desc: 'MiWiFi-RM1800', icon: Network, color: 'text-purple-400', bg: 'bg-purple-500/10' }
+    {
+      id: 'modem', name: '电信光猫', ip: '192.168.1.1', ipType: 'static',
+      desc: '桥接模式 | 旁路由 NAT 映射', badge: '🔌 LAN 管理互通',
+      icon: Globe, color: 'text-blue-400', bg: 'bg-blue-500/10',
+      config: ['桥接模式 (Bridge)', 'DHCP 已关闭', '自带WiFi可选关闭'],
+      physical: '电信天翼网关 | 千兆光口',
+      ports: [
+        { name: 'WAN', type: 'fiber', status: 'up', note: '光纤入户' },
+        { name: 'LAN1', type: 'wired', status: 'up', note: '→ 主路由 WAN' },
+        { name: 'LAN2', type: 'wired', status: 'up', note: '→ 主路由 LAN (管理直通)' },
+        { name: 'LAN3', type: 'wired', status: 'idle' },
+      ],
+      webUrl: 'http://192.168.1.1',
+    },
+    {
+      id: 'main-router', name: '小米主路由', ip: '192.168.123.6', ipType: 'static',
+      desc: 'PPPoE 拨号 | DHCP 关闭', icon: Router, color: 'text-indigo-400', bg: 'bg-indigo-500/10', glow: true,
+      config: ['PPPoE 拨号 (公网出口)', 'DHCP 已关闭', 'SSH 端口映射: 外网→.77:22'],
+      physical: '小米 AX 系列 | Wi-Fi 6 双频',
+      gateway: 'PPPoE',
+      ports: [
+        { name: 'WAN', type: 'wired', status: 'up', note: '← 光猫 LAN1' },
+        { name: 'LAN1', type: 'wired', status: 'up', note: '→ 旁路由' },
+        { name: 'LAN2', type: 'wired', status: 'up', note: '← 光猫 LAN2 (管理)' },
+        { name: 'LAN3', type: 'wired', status: 'up', note: '→ NAS / Mesh' },
+      ],
+      wireless: ['5G', '2.4G'],
+      webUrl: 'http://192.168.123.6',
+    },
+    {
+      id: 'bypass', name: '旁路由 (Passwall)', ip: '192.168.123.99', ipType: 'static',
+      mac: 'CE:9F:AD:**:**:**', desc: '网关 & DHCP 服务',
+      icon: ShieldCheck, color: 'text-rose-400', bg: 'bg-rose-500/10',
+      config: ['DHCP 服务器 (全局)', '默认网关角色', 'Passwall 科学上网', 'ACL 分流: IoT→直连'],
+      physical: 'ImmortalWrt / OpenWrt',
+      gateway: '.6',
+      ports: [
+        { name: 'ETH', type: 'wired', status: 'up', note: '← 主路由 LAN1' },
+      ],
+      webUrl: 'http://192.168.123.99',
+    },
+    {
+      id: 'mesh', name: '小米 Mesh 节点', ip: '192.168.123.143', ipType: 'dhcp',
+      mac: '88:C3:97:**:**:**', desc: 'MiWiFi-RM1800',
+      icon: Network, color: 'text-purple-400', bg: 'bg-purple-500/10',
+      config: ['Mesh 无线回程', '透传模式'],
+      physical: 'Redmi AX1800 | Wi-Fi 6',
+      gateway: '.99',
+      ports: [
+        { name: 'LAN1', type: 'wired', status: 'up', note: '→ PVE 宿主机' },
+      ],
+      wireless: ['5G', '2.4G'],
+      webUrl: 'http://192.168.123.143',
+    }
   ],
   servers: [
-    { id: 'nas', name: '绿联私有云 NAS', ip: '192.168.123.15', mac: '98:6E:E8:**:**:**', gateway: '.6', icon: HardDrive, color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
-    { id: 'pve', name: 'PVE 虚拟机宿主机', ip: '192.168.123.66', mac: 'A8:B8:E0:**:**:**', gateway: '.6', icon: Server, color: 'text-sky-400', bg: 'bg-sky-500/10' },
-    { id: 'ubuntu', name: 'OpenClaw Ubuntu', ip: '192.168.123.77', mac: 'BC:24:11:**:**:**', gateway: '.99 (旁路由)', warning: true, badge: '🌐 外网 SSH 直连', icon: LobsterIcon, color: 'text-orange-400', bg: 'bg-orange-500/10' },
-    { id: 'openwrt-vm', name: 'OpenWRT 虚拟机', ip: '192.168.123.9', desc: '软路由系统', icon: Router, color: 'text-indigo-400', bg: 'bg-indigo-500/10' }
+    {
+      id: 'nas', name: '绿联私有云 NAS', ip: '192.168.123.15', ipType: 'static',
+      mac: '98:6E:E8:**:**:**', gateway: '.6',
+      icon: HardDrive, color: 'text-cyan-400', bg: 'bg-cyan-500/10',
+      config: ['Docker Host 模式', 'HA / qBit / Alist'],
+      physical: '绿联 DX4600+ | 4Bay NAS',
+      ports: [
+        { name: 'ETH', type: 'wired', status: 'up', note: '← 主路由 LAN' },
+      ],
+      webUrl: 'http://192.168.123.15',
+    },
+    {
+      id: 'pve', name: 'PVE 虚拟机宿主机', ip: '192.168.123.66', ipType: 'static',
+      mac: 'A8:B8:E0:**:**:**', gateway: '.6',
+      icon: Server, color: 'text-sky-400', bg: 'bg-sky-500/10',
+      config: ['Proxmox VE 虚拟化', 'vmbr0 虚拟网桥', 'VM: OpenWrt + Ubuntu'],
+      physical: 'x86 迷你主机 | 3×ETH',
+      ports: [
+        { name: 'ETH0', type: 'wired', status: 'up', note: '← Mesh LAN / 主路由' },
+        { name: 'ETH1', type: 'wired', status: 'idle' },
+        { name: 'ETH2', type: 'wired', status: 'idle' },
+      ],
+      webUrl: 'https://192.168.123.66:8006',
+    },
+    {
+      id: 'ubuntu', name: 'OpenClaw Ubuntu', ip: '192.168.123.77', ipType: 'static',
+      mac: 'BC:24:11:**:**:**', gateway: '.99 (旁路由)', warning: true,
+      badge: '🌐 外网 SSH 直连',
+      icon: LobsterIcon, color: 'text-orange-400', bg: 'bg-orange-500/10',
+      config: ['Ubuntu 22.04 LTS', '外网 SSH 端口映射', '流量走旁路由代理'],
+      physical: 'PVE VM | 4C8G',
+      ports: [
+        { name: 'vETH', type: 'virtual', status: 'up', note: '→ vmbr0' },
+      ],
+    },
+    {
+      id: 'openwrt-vm', name: 'OpenWRT 虚拟机', ip: '192.168.123.9', ipType: 'static',
+      desc: '软路由系统', icon: Router, color: 'text-indigo-400', bg: 'bg-indigo-500/10',
+      config: ['OpenWrt 软路由', 'vETH 接入 vmbr0'],
+      physical: 'PVE VM | 2C2G',
+      ports: [
+        { name: 'vETH', type: 'virtual', status: 'up', note: '→ vmbr0' },
+      ],
+      webUrl: 'http://192.168.123.9',
+    }
   ],
   wifi5g: [
-    { id: 'dev-5g-appletv', name: 'Apple-TV-7', ip: '192.168.123.238', mac: 'C0:95:6D:**:**:**', icon: Tv },
-    { id: 'dev-5g-watch', name: 'Smart Watch', ip: '192.168.123.132', mac: '42:7F:77:**:**:**', icon: Clock },
-    { id: 'dev-5g-iphone', name: 'iPhone 16 Pro Max', ip: '192.168.123.162', mac: '58:66:6D:**:**:**', icon: Smartphone },
-    { id: 'dev-5g-macbook', name: 'MacBook Pro', ip: '192.168.123.115', mac: '02:D4:9E:**:**:**', icon: Laptop },
-    { id: 'dev-5g-pc', name: 'Desktop PC', ip: '192.168.123.167', mac: '38:18:68:**:**:**', icon: Monitor },
-    { id: 'dev-5g-other', name: '其他未知 5G 设备 x4', ip: 'DHCP 动态', mac: '8A:0B / 5C:C3...', icon: GridIcon },
+    { id: 'dev-5g-appletv', name: 'Apple-TV-7', ip: '192.168.123.238', ipType: 'dhcp', mac: 'C0:95:6D:**:**:**', icon: Tv, gateway: '.99' },
+    { id: 'dev-5g-watch', name: 'Smart Watch', ip: '192.168.123.132', ipType: 'dhcp', mac: '42:7F:77:**:**:**', icon: Clock, gateway: '.99' },
+    { id: 'dev-5g-iphone', name: 'iPhone 16 Pro Max', ip: '192.168.123.162', ipType: 'dhcp', mac: '58:66:6D:**:**:**', icon: Smartphone, gateway: '.99' },
+    { id: 'dev-5g-macbook', name: 'MacBook Pro', ip: '192.168.123.115', ipType: 'dhcp', mac: '02:D4:9E:**:**:**', icon: Laptop, gateway: '.99' },
+    { id: 'dev-5g-pc', name: 'Desktop PC', ip: '192.168.123.167', ipType: 'dhcp', mac: '38:18:68:**:**:**', icon: Monitor, gateway: '.99' },
+    { id: 'dev-5g-other', name: '其他未知 5G 设备 x4', ip: 'DHCP 动态', ipType: 'dhcp', mac: '8A:0B / 5C:C3...', icon: GridIcon, gateway: '.99' },
   ],
-  hub: { id: 'dev-24g-hub', name: '中枢网关 Hub', ip: '192.168.123.172', mac: '94:F8:27:7F:7C:C8', icon: Cpu, color: 'text-amber-400' },
+  hub: {
+    id: 'dev-24g-hub', name: '小米中枢网关 Hub', ip: '192.168.123.172', ipType: 'dhcp-static',
+    mac: '94:F8:27:7F:7C:C8', icon: Cpu, color: 'text-amber-400',
+    config: ['ZigBee 协调器', 'BLE Mesh 网关', 'DHCP Option 3→.6'],
+    physical: 'xiaomi-gateway-hub1',
+    gateway: '.6 (强制绑定)',
+    wireless: ['2.4G', 'BLE', 'ZigBee'],
+  },
   bluetooth: [
-    { id: 'dev-bt-curtain1', name: '杜亚窗帘电机 1', ip: '192.168.123.144', mac: 'C4:93:BB:10:EE:4A', icon: Square },
-    { id: 'dev-bt-curtain2', name: '杜亚窗帘电机 2', ip: '192.168.123.110', mac: 'C4:93:BB:10:EE:BE', icon: Square },
-    { id: 'dev-bt-plug1', name: '创米智能插座 1', ip: '192.168.123.129', mac: '58:B6:23:EC:B5:29', icon: Plug },
-    { id: 'dev-bt-plug2', name: '创米智能插座 2', ip: '192.168.123.130', mac: '58:B6:23:ED:28:F6', icon: Plug },
+    { id: 'dev-bt-curtain1', name: '杜亚窗帘电机 1', ip: '192.168.123.144', ipType: 'dhcp-static', mac: 'C4:93:BB:10:EE:4A', icon: Square, gateway: '.6' },
+    { id: 'dev-bt-curtain2', name: '杜亚窗帘电机 2', ip: '192.168.123.110', ipType: 'dhcp-static', mac: 'C4:93:BB:10:EE:BE', icon: Square, gateway: '.6' },
+    { id: 'dev-bt-plug1', name: '创米智能插座 1', ip: '192.168.123.129', ipType: 'dhcp-static', mac: '58:B6:23:EC:B5:29', icon: Plug, gateway: '.6' },
+    { id: 'dev-bt-plug2', name: '创米智能插座 2', ip: '192.168.123.130', ipType: 'dhcp-static', mac: '58:B6:23:ED:28:F6', icon: Plug, gateway: '.6' },
   ],
   wifi24g: [
-    { id: 'dev-24g-ac1', name: '小米空调 (c11)', ip: '192.168.123.104', mac: '7C:C2:94:31:1A:75', icon: Wind },
-    { id: 'dev-24g-ac2', name: '公牛空调伴侣 (cp6)', ip: '192.168.123.145', mac: '00:50:79:F1:86:35', icon: Wind },
-    { id: 'dev-24g-ac3', name: '绿米空调伴侣 (mcn02)', ip: '192.168.123.153', mac: '50:EC:50:7D:6B:91', icon: Wind },
-    { id: 'dev-24g-fridge', name: '米家冰箱 (midjd6)', ip: '192.168.123.188', mac: '3C:C5:DD:**:**:**', icon: Thermometer },
-    { id: 'dev-24g-camera', name: '创米摄像头', ip: '192.168.123.140', mac: '78:DF:72:AD:03:73', icon: Camera },
-    { id: 'dev-24g-speaker', name: '小爱同学 X08C', ip: '192.168.123.223', mac: 'D4:DA:21:41:19:04', icon: Volume2 },
+    { id: 'dev-24g-ac1', name: '小米空调 (c11)', ip: '192.168.123.104', ipType: 'dhcp-static', mac: '7C:C2:94:31:1A:75', icon: Wind, gateway: '.6' },
+    { id: 'dev-24g-ac2', name: '公牛空调伴侣 (cp6)', ip: '192.168.123.145', ipType: 'dhcp-static', mac: '00:50:79:F1:86:35', icon: Wind, gateway: '.6' },
+    { id: 'dev-24g-ac3', name: '绿米空调伴侣 (mcn02)', ip: '192.168.123.153', ipType: 'dhcp-static', mac: '50:EC:50:7D:6B:91', icon: Wind, gateway: '.6' },
+    { id: 'dev-24g-fridge', name: '米家冰箱 (midjd6)', ip: '192.168.123.188', ipType: 'dhcp', mac: '3C:C5:DD:**:**:**', icon: Thermometer, gateway: '.99' },
+    { id: 'dev-24g-camera', name: '创米摄像头', ip: '192.168.123.140', ipType: 'dhcp', mac: '78:DF:72:AD:03:73', icon: Camera, gateway: '.99' },
+    { id: 'dev-24g-speaker', name: '小爱同学 X08C', ip: '192.168.123.223', ipType: 'dhcp', mac: 'D4:DA:21:41:19:04', icon: Volume2, gateway: '.99' },
   ]
 };
 
@@ -88,62 +187,205 @@ const GlowingDot = () => (
   </span>
 );
 
-const ProNodeCard = ({ id, name, ip, mac, desc, gateway, warning, badge, icon: Icon, color, bg, glow, width = "w-64" }) => {
+// --- IP 类型徽标 ---
+const IpTypeBadge = ({ ipType }) => {
+  if (!ipType) return null;
+  const styles = {
+    'static': { label: '静态', cls: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
+    'dhcp': { label: 'DHCP', cls: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
+    'dhcp-static': { label: 'DHCP 绑定', cls: 'bg-violet-500/20 text-violet-300 border-violet-500/30' },
+  };
+  const s = styles[ipType] || styles['dhcp'];
+  return <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${s.cls}`}>{s.label}</span>;
+};
+
+// --- 网关徽标 ---
+const GatewayBadge = ({ gateway, warning }) => {
+  if (!gateway) return null;
+  const is99 = gateway.includes('.99');
+  const is6 = gateway.includes('.6');
+  const isPPPoE = gateway === 'PPPoE';
+  const cls = warning
+    ? 'bg-rose-950 text-rose-400 border-rose-900/50'
+    : is99
+      ? 'bg-rose-500/10 text-rose-300 border-rose-500/30'
+      : is6
+        ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+        : isPPPoE
+          ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30'
+          : 'bg-slate-700 text-slate-300 border-slate-600';
+  return (
+    <span className={`text-[9px] font-bold font-mono px-1.5 py-0.5 rounded border flex items-center gap-1 ${cls}`}>
+      {warning && <AlertTriangle size={9} />}
+      GW {gateway}
+    </span>
+  );
+};
+
+// --- 无线频段图标组 (右上角) ---
+const WirelessIcons = ({ wireless }) => {
+  if (!wireless || wireless.length === 0) return null;
+  const iconMap = {
+    '5G': { label: '5G', cls: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' },
+    '2.4G': { label: '2.4G', cls: 'bg-amber-500/20 text-amber-400 border-amber-500/40' },
+    'BLE': { label: 'BLE', cls: 'bg-blue-500/20 text-blue-400 border-blue-500/40' },
+    'ZigBee': { label: 'ZB', cls: 'bg-purple-500/20 text-purple-400 border-purple-500/40' },
+  };
+  return (
+    <div className="absolute top-2.5 right-2.5 flex gap-1 z-20">
+      {wireless.map(w => {
+        const cfg = iconMap[w] || { label: w, cls: 'bg-slate-700 text-slate-300 border-slate-600' };
+        return (
+          <span key={w} className={`flex items-center gap-0.5 text-[8px] font-bold px-1.5 py-0.5 rounded-full border ${cfg.cls}`}>
+            <Wifi size={8} /> {cfg.label}
+          </span>
+        );
+      })}
+    </div>
+  );
+};
+
+// --- 端口可视化 ---
+const PortsRow = ({ ports }) => {
+  if (!ports || ports.length === 0) return null;
+  const typeIcon = (t) => {
+    if (t === 'fiber') return <Globe size={9} className="text-yellow-400" />;
+    if (t === 'wired') return <Cable size={9} className="text-blue-400" />;
+    if (t === 'virtual') return <Network size={9} className="text-sky-400" />;
+    return <Plug size={9} className="text-slate-400" />;
+  };
+  return (
+    <div className="flex flex-wrap gap-1.5 mt-1">
+      {ports.map((p, i) => (
+        <div
+          key={i}
+          className={`flex items-center gap-1 text-[8px] font-mono px-1.5 py-0.5 rounded border ${
+            p.status === 'up'
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+              : 'bg-slate-800 border-slate-700 text-slate-500'
+          }`}
+          title={p.note || p.name}
+        >
+          {typeIcon(p.type)}
+          <span className="font-bold">{p.name}</span>
+          {p.status === 'up' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_4px_#10b981]"></span>}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const ProNodeCard = ({
+  id, name, ip, ipType, mac, desc, gateway, warning, badge, icon: Icon,
+  color, bg, glow, width = "w-64",
+  config, physical, ports, wireless, webUrl
+}) => {
   const SafeIcon = Icon || Box;
-  
-  // 根据徽章内容动态配置颜色
-  const badgeColor = badge?.includes('SSH') 
-    ? 'from-rose-500 to-orange-500 shadow-[0_0_10px_rgba(244,63,94,0.4)] border-rose-400/50' 
+
+  const badgeColor = badge?.includes('SSH')
+    ? 'from-rose-500 to-orange-500 shadow-[0_0_10px_rgba(244,63,94,0.4)] border-rose-400/50'
     : 'from-teal-500 to-cyan-500 shadow-[0_0_10px_rgba(20,184,166,0.4)] border-teal-400/50';
 
   return (
     <div id={id} className={`relative z-10 flex flex-col p-4 rounded-xl border border-slate-700/60 bg-slate-800/80 backdrop-blur-md shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:border-slate-500 ${width} ${glow ? 'shadow-[0_0_30px_rgba(99,102,241,0.15)] border-indigo-500/40' : ''}`}>
-      
-      {/* 动态状态徽章 (如: LAN直通, 端口映射) */}
+
+      {/* 动态状态徽章 */}
       {badge && (
         <div className={`absolute -top-3 left-4 bg-gradient-to-r ${badgeColor} text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full z-20 flex items-center gap-1 border`}>
           {badge}
         </div>
       )}
-      
+
+      {/* 无线频段图标 (右上角) */}
+      <WirelessIcons wireless={wireless} />
+
       <GlowingDot />
-      
+
+      {/* Header: Icon + Name + IP + IP Type */}
       <div className="flex items-center gap-3 mb-3 mt-1">
         <div className={`p-2.5 rounded-lg ${bg || 'bg-slate-700'} ${color || 'text-slate-300'} ring-1 ring-inset ring-white/10`}>
           <SafeIcon size={22} />
         </div>
-        <div className="flex-1 min-w-0 text-left pr-4">
+        <div className="flex-1 min-w-0 text-left pr-8">
           <h3 className="text-[13px] font-bold text-slate-100 truncate">{name}</h3>
-          <p className="text-[11px] font-mono text-emerald-400 truncate mt-0.5">{ip}</p>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className="text-[11px] font-mono text-emerald-400 truncate">{ip}</span>
+            <IpTypeBadge ipType={ipType} />
+          </div>
         </div>
       </div>
-      
-      <div className="space-y-1.5 border-t border-slate-700/50 pt-2.5 text-left">
+
+      {/* Details Grid */}
+      <div className="space-y-2 border-t border-slate-700/50 pt-2.5 text-left">
+        {/* MAC */}
         {mac && (
           <div className="flex justify-between items-center text-[10px]">
-            <span className="text-slate-500 font-medium">MAC Address</span>
+            <span className="text-slate-500 font-medium">MAC</span>
             <span className="font-mono text-slate-300 tracking-wider">{mac}</span>
           </div>
         )}
+
+        {/* Gateway */}
         {gateway && (
           <div className="flex justify-between items-center text-[10px]">
-            <span className="text-slate-500 font-medium">Default Gateway</span>
-            <span className={`font-mono ${warning ? 'text-rose-400 font-bold bg-rose-950 px-1.5 py-0.5 rounded border border-rose-900/50 flex items-center gap-1' : 'text-slate-300'}`}>
-              {warning && <AlertTriangle size={10} />}
-              {gateway}
-            </span>
+            <span className="text-slate-500 font-medium">Gateway</span>
+            <GatewayBadge gateway={gateway} warning={warning} />
           </div>
         )}
+
+        {/* Config / Status */}
+        {config && config.length > 0 && (
+          <div className="mt-1.5">
+            <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Config / Status</div>
+            <div className="flex flex-wrap gap-1">
+              {config.map((c, i) => (
+                <span key={i} className="text-[9px] bg-slate-900/80 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700/50">{c}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Physical */}
+        {physical && (
+          <div className="flex justify-between items-center text-[10px] mt-1">
+            <span className="text-slate-500 font-medium">Physical</span>
+            <span className="text-slate-400 text-[9px]">{physical}</span>
+          </div>
+        )}
+
+        {/* Ports */}
+        {ports && ports.length > 0 && (
+          <div className="mt-1.5">
+            <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Ports ({ports.length})</div>
+            <PortsRow ports={ports} />
+          </div>
+        )}
+
+        {/* Description */}
         {desc && (
           <p className="text-[10px] text-slate-400 mt-1.5 leading-snug">{desc}</p>
+        )}
+
+        {/* Web UI Link */}
+        {webUrl && (
+          <a
+            href={webUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 flex items-center gap-1.5 text-[10px] text-sky-400 hover:text-sky-300 transition-colors font-medium group"
+          >
+            <ExternalLink size={11} className="group-hover:scale-110 transition-transform" />
+            <span className="underline underline-offset-2 decoration-sky-400/30 group-hover:decoration-sky-300/60">{webUrl}</span>
+          </a>
         )}
       </div>
     </div>
   );
 };
 
-const CompactDeviceCard = ({ id, name, ip, mac, icon: Icon, color }) => {
+const CompactDeviceCard = ({ id, name, ip, ipType, mac, icon: Icon, color, gateway }) => {
   const SafeIcon = Icon || Box;
+  const gwIs99 = gateway?.includes('.99');
   return (
     <div id={id} className="relative z-10 flex items-center gap-3 p-2.5 rounded-lg border border-slate-700/50 bg-slate-800/40 hover:bg-slate-700/80 hover:border-slate-600 transition-all duration-200 w-full group">
       <div className={`${color || 'text-slate-400'} group-hover:scale-110 transition-transform`}>
@@ -151,9 +393,14 @@ const CompactDeviceCard = ({ id, name, ip, mac, icon: Icon, color }) => {
       </div>
       <div className="flex flex-col flex-1 min-w-0 text-left">
         <span className="text-[11px] font-semibold text-slate-200 truncate">{name}</span>
-        <div className="flex items-center gap-2 mt-0.5">
+        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
           <span className="text-[10px] font-mono text-emerald-400/90">{ip}</span>
-          {mac && <span className="text-[9px] font-mono text-slate-500 truncate">{mac}</span>}
+          {ipType && <IpTypeBadge ipType={ipType} />}
+          {gateway && (
+            <span className={`text-[8px] font-mono font-bold px-1 py-0 rounded ${gwIs99 ? 'text-rose-400 bg-rose-500/10' : 'text-emerald-400 bg-emerald-500/10'}`}>
+              GW{gateway}
+            </span>
+          )}
         </div>
       </div>
     </div>
@@ -385,7 +632,7 @@ export default function App() {
       ref={exportRef}
       className="min-h-screen bg-[#0B1120] text-slate-200 p-8 font-sans overflow-x-auto bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0B1120] to-[#0B1120]"
     >
-      <div className="max-w-[1600px] mx-auto min-w-[1300px] relative pb-16" ref={containerRef}>
+      <div className="max-w-[1700px] mx-auto min-w-[1400px] relative pb-16" ref={containerRef}>
         
         {/* Header Dashboard Panel */}
         <div className="flex justify-between items-end mb-16 z-30 relative bg-slate-800/30 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-md shadow-lg">
@@ -458,7 +705,7 @@ export default function App() {
         </svg>
 
         {/* --- GRID 布局 (根据 layout.png 设计 4列x4行) --- */}
-        <div className="grid grid-cols-[140px_350px_420px_360px] gap-x-12 gap-y-16 relative z-10 items-center">
+        <div className="grid grid-cols-[140px_380px_440px_380px] gap-x-10 gap-y-16 relative z-10 items-center">
           
           {/* ================= ROW 1 ================= */}
           <div className="col-start-3 flex justify-center w-full relative">
@@ -497,7 +744,7 @@ export default function App() {
                 </h3>
                 {/* Hub 作为该网段内的核心节点放置于顶端 */}
                 <div className="mb-4">
-                  <ProNodeCard id="dev-24g-hub" {...devices.hub} width="w-full" bg="bg-amber-500/20" color="text-amber-400" />
+                  <ProNodeCard {...devices.hub} width="w-full" bg="bg-amber-500/20" color="text-amber-400" />
                 </div>
                 {/* 其他 2.5G/2.4G 设备列全 */}
                 <div className="grid grid-cols-1 gap-2.5">
@@ -510,12 +757,26 @@ export default function App() {
           <div className="col-start-2 flex justify-center w-full self-start relative">
             {/* NAS 展开视图容器 */}
             <div id="nas-container" className="border-2 border-cyan-500/40 rounded-2xl p-5 bg-slate-900/80 shadow-2xl w-full min-h-[200px] relative">
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3 mb-3">
                 <div className="p-2 bg-cyan-500/20 rounded-lg text-cyan-400"><HardDrive size={24} /></div>
-                <div>
+                <div className="flex-1">
                   <h3 className="font-bold text-slate-100 text-sm">绿联私有云 NAS</h3>
-                  <p className="font-mono text-emerald-400 text-[10px] mt-0.5">192.168.123.15</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="font-mono text-emerald-400 text-[10px]">192.168.123.15</span>
+                    <IpTypeBadge ipType="static" />
+                    <GatewayBadge gateway=".6" />
+                  </div>
                 </div>
+                <a href="http://192.168.123.15" target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-sky-300 transition-colors">
+                  <ExternalLink size={14} />
+                </a>
+              </div>
+              <div className="flex items-center gap-1.5 mb-4 text-[9px]">
+                <span className="bg-slate-900/80 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700/50">绿联 DX4600+</span>
+                <span className="bg-slate-900/80 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700/50">4Bay NAS</span>
+                <span className="flex items-center gap-0.5 bg-emerald-500/10 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                  <Cable size={8} /> ETH ↑
+                </span>
               </div>
               
               {/* 微观 Docker 网桥 */}
@@ -524,18 +785,18 @@ export default function App() {
                   <Box size={12}/> Docker (Host)
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col bg-slate-800 p-2.5 rounded-lg border border-slate-700/50 hover:border-cyan-500/50 transition-colors group">
-                    <span className="text-xs text-blue-300 font-bold mb-1.5 truncate group-hover:text-blue-200">Home Assistant</span>
-                    <span className="text-[10px] font-mono bg-slate-900 px-1.5 py-0.5 rounded text-slate-400 w-fit border border-slate-700/30">8123</span>
-                  </div>
-                  <div className="flex flex-col bg-slate-800 p-2.5 rounded-lg border border-slate-700/50 hover:border-cyan-500/50 transition-colors group">
-                    <span className="text-xs text-blue-300 font-bold mb-1.5 truncate group-hover:text-blue-200">qBittorrent</span>
-                    <span className="text-[10px] font-mono bg-slate-900 px-1.5 py-0.5 rounded text-slate-400 w-fit border border-slate-700/30">6881/8080</span>
-                  </div>
-                  <div className="flex flex-col bg-slate-800 p-2.5 rounded-lg border border-slate-700/50 hover:border-cyan-500/50 transition-colors group">
-                    <span className="text-xs text-blue-300 font-bold mb-1.5 truncate group-hover:text-blue-200">Alist</span>
-                    <span className="text-[10px] font-mono bg-slate-900 px-1.5 py-0.5 rounded text-slate-400 w-fit border border-slate-700/30">5244/5245</span>
-                  </div>
+                  <a href="http://192.168.123.15:8123" target="_blank" rel="noopener noreferrer" className="flex flex-col bg-slate-800 p-2.5 rounded-lg border border-slate-700/50 hover:border-cyan-500/50 transition-colors group cursor-pointer">
+                    <span className="text-xs text-blue-300 font-bold mb-1.5 truncate group-hover:text-blue-200 flex items-center gap-1">Home Assistant <ExternalLink size={9} className="opacity-0 group-hover:opacity-100" /></span>
+                    <span className="text-[10px] font-mono bg-slate-900 px-1.5 py-0.5 rounded text-slate-400 w-fit border border-slate-700/30">:8123</span>
+                  </a>
+                  <a href="http://192.168.123.15:8080" target="_blank" rel="noopener noreferrer" className="flex flex-col bg-slate-800 p-2.5 rounded-lg border border-slate-700/50 hover:border-cyan-500/50 transition-colors group cursor-pointer">
+                    <span className="text-xs text-blue-300 font-bold mb-1.5 truncate group-hover:text-blue-200 flex items-center gap-1">qBittorrent <ExternalLink size={9} className="opacity-0 group-hover:opacity-100" /></span>
+                    <span className="text-[10px] font-mono bg-slate-900 px-1.5 py-0.5 rounded text-slate-400 w-fit border border-slate-700/30">:6881/:8080</span>
+                  </a>
+                  <a href="http://192.168.123.15:5244" target="_blank" rel="noopener noreferrer" className="flex flex-col bg-slate-800 p-2.5 rounded-lg border border-slate-700/50 hover:border-cyan-500/50 transition-colors group cursor-pointer">
+                    <span className="text-xs text-blue-300 font-bold mb-1.5 truncate group-hover:text-blue-200 flex items-center gap-1">Alist <ExternalLink size={9} className="opacity-0 group-hover:opacity-100" /></span>
+                    <span className="text-[10px] font-mono bg-slate-900 px-1.5 py-0.5 rounded text-slate-400 w-fit border border-slate-700/30">:5244/:5245</span>
+                  </a>
                   <div className="flex flex-col items-center justify-center bg-slate-800/20 p-2.5 rounded-lg border border-dashed border-slate-700/50 text-slate-500 hover:bg-slate-800/40 hover:text-slate-400 transition-colors cursor-pointer">
                     <span className="text-[10px] font-medium">+ 部署新容器</span>
                   </div>
@@ -595,10 +856,10 @@ export default function App() {
                 </div>
 
                 {/* Physical Interfaces representation */}
-                <div className="flex gap-6 mt-6 justify-start pl-4 text-slate-500 text-[10px] font-bold">
-                   <div className="flex flex-col items-center gap-1.5"><Network size={18} className="text-slate-400"/>ETH0</div>
-                   <div className="flex flex-col items-center gap-1.5"><Network size={18} className="text-slate-400"/>ETH1</div>
-                   <div className="flex flex-col items-center gap-1.5"><Network size={18} className="text-slate-400"/>ETH2</div>
+                <div className="flex gap-4 mt-6 justify-start pl-4 text-[10px] font-bold">
+                   <div className="flex flex-col items-center gap-1.5 text-emerald-400"><Cable size={16} />ETH0 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_4px_#10b981]"></span></div>
+                   <div className="flex flex-col items-center gap-1.5 text-slate-500"><Cable size={16} />ETH1</div>
+                   <div className="flex flex-col items-center gap-1.5 text-slate-500"><Cable size={16} />ETH2</div>
                 </div>
               </div>
 
@@ -613,9 +874,22 @@ export default function App() {
               {/* Right: PVE Server / CPU */}
               <div className="flex flex-col items-center justify-center w-[25%] relative z-10">
                 <div id="pve-cpu-node" className="flex flex-col items-center justify-center border border-slate-600 bg-slate-800/80 p-5 rounded-xl w-full h-full shadow-lg relative">
-                   <div className="text-sky-400 text-xs font-mono tracking-widest mb-4 text-center leading-relaxed">LAN IP:<br/>192.168.123.66</div>
-                   <Cpu size={48} className="text-blue-400 mb-4"/>
-                   <div className="font-bold text-sm tracking-widest text-slate-200 text-center">PVE服务器</div>
+                   <div className="text-sky-400 text-xs font-mono tracking-widest mb-2 text-center leading-relaxed">LAN IP:<br/>192.168.123.66</div>
+                   <div className="flex items-center gap-1 mb-2">
+                     <IpTypeBadge ipType="static" />
+                     <GatewayBadge gateway=".6" />
+                   </div>
+                   <Cpu size={44} className="text-blue-400 mb-2"/>
+                   <div className="font-bold text-sm tracking-widest text-slate-200 text-center mb-1">PVE服务器</div>
+                   <div className="text-[8px] text-slate-400 mb-2">x86 迷你主机 | 3×ETH</div>
+                   <div className="flex gap-1 mb-2">
+                     {['ETH0 ↑', 'ETH1', 'ETH2'].map((p, i) => (
+                       <span key={i} className={`text-[7px] font-mono px-1 py-0.5 rounded border ${i === 0 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>{p}</span>
+                     ))}
+                   </div>
+                   <a href="https://192.168.123.66:8006" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[9px] text-sky-400 hover:text-sky-300 transition-colors">
+                     <ExternalLink size={10} /> Web UI :8006
+                   </a>
                 </div>
               </div>
 
